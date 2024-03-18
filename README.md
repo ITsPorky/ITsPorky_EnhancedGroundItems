@@ -1,12 +1,12 @@
-# ITsPorkys Show Nearby Items Toggle (v1.0.0)
+# ITsPorkys Show Nearby Items (v1.0.0)
 
 **IMPORTANT NOTE: This addon requires [Mod Configuration Manager(MCM)](https://github.com/RAX-Anomaly/Anomaly-Mod-Configuration-Menu) to work**
 
-An addon for S.T.A.L.K.E.R Anomaly that adds the ability to toggle to show nearby items names.
+An addon for S.T.A.L.K.E.R Anomaly that adds the ability to toggle on ground item markers and item stat windows when looking at the item.
 
 ## Contents
 
-- [ITsPorkys Show Nearby Items Toggle (v1.0.0)](#itsporkys-show-nearby-items-toggle-v100)
+- [ITsPorkys Show Nearby Items (v1.0.0)](#itsporkys-show-nearby-items-toggle-v100)
   - [Contents](#contents)
   - [How To Install](#how-to-install)
     - [Using Mod Organiser 2(MO2)](#using-mod-organiser-2mo2)
@@ -23,11 +23,11 @@ Simple explanations on how to install this addon to your S.T.A.L.K.E.R. Anomaly 
 
 ### Using Mod Organiser 2(MO2)
 
-To install the addon with MO2, simply open MO2 and select "Install Mod" in the top left. Then select the `ITsPorkys_ShowNearbyItemsToggle.zip`. Then make sure to tick the checkbox in MO2 before launching.
+To install the addon with MO2, simply open MO2 and select "Install Mod" in the top left. Then select the `ITsPorkys_ShowNearbyItems.zip`. Then make sure to tick the checkbox in MO2 before launching.
 
 ### Manually Install of Addon
 
-To install the addon manually, you will need to unzip the `ITsPorkys_ShowNearbyItemsToggle.zip`. Then you will need to copy/paste or drag the `gamedata` folder across to the root directory of your `S.T.A.L.K.E.R. Anomaly` install. This will add the files and scripts needed for the addon to the games `gamedata` directory.
+To install the addon manually, you will need to unzip the `ITsPorkys_ShowNearbyItems.zip`. Then you will need to copy/paste or drag the `gamedata` folder across to the root directory of your `S.T.A.L.K.E.R. Anomaly` install. This will add the files and scripts needed for the addon to the games `gamedata` directory.
 
 ## Addon Configuration Instructions and Recommendations
 
@@ -41,7 +41,7 @@ Hi Stalkers, just thought I'd give you a guide for using/configuring this "Show 
 
 This addon uses the MCM addon created by [RavenAscendant](https://github.com/RAX-Anomaly), and allows a menu to be created for the player(yes that's you) to change settings/ configurations for the addon. This addon adds the ability to change the keybind to a key you wish to assign it too, there is also the ability to configure the "Toggle Mode" and "Toggle Modifier".
 
-The MCM Tab for this addon is "TAR - Toggle Auto Run"
+The MCM Tab for this addon is "SNI - Show Nearby Items"
 
 ### MCM Options
 
@@ -57,4 +57,4 @@ The MCM Tab for this addon is "TAR - Toggle Auto Run"
 
 ## Authors Note: Hope you find this addon useful!
 
-Hope you enjoy using the addon! I know I wanted this feature and wanted to make it easily customisable for the player in game, thats why I made this addon. - _ITsPorky_
+Hope you enjoy using the addon! I know I wanted this feature and wanted to make it easily customisable for the player in game, thats why I made this addon. Plus I just like making mods to test my skills and improve - _ITsPorky_

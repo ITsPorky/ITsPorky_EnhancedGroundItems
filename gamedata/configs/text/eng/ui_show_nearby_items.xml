@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <string_table>
 	<string id="ui_mcm_menu_porky_show_nearby_items">
-		<text>Show Nearby Items</text>
+		<text>SNI - Show Nearby Items</text>
 	</string>
 	<string id="ui_mcm_porky_show_nearby_items_showNearbyItemsTitle">
 		<text>SNI - Show Nearby Items</text>
