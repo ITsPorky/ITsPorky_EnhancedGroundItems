@@ -1,0 +1,441 @@
+-------------------------------------------------------------------
+-- Item info box
+-------------------------------------------------------------------
+
+class "Porky_UIInfoItem"
+
+function Porky_UIInfoItem:__init(owner, delay)
+	self.owner = owner
+	self.id = nil
+	self.section = nil
+	
+	self.can_compare = false
+	self.timer = 0
+	self.delay = delay or 700
+	self.ammo_parse = { [1]=true , [4] = true , [7] = true , [10] = true }
+
+	utils_ui.prepare_stats_table()
+	
+	self:InitControls()
+	self:Show(false)
+end
+
+function Porky_UIInfoItem:InitControls()
+	--[[
+	self.xml				= CScriptXmlInit()
+	local xml = self.xml
+	xml:ParseFile			("ui_item_info.xml")
+	--]]
+	self.dialog = XMLP:InitStatic("item_info", self.owner)
+	
+	self.frame    = XMLP:InitFrame("item_info:background_frame", self.dialog)
+	self.name     = XMLP:InitTextWnd("item_info:name", self.dialog)
+	self.weight   = XMLP:InitTextWnd("item_info:weight", self.dialog)
+	self.value     = XMLP:InitTextWnd("item_info:cost", self.dialog)
+	self.note 	  = XMLP:InitTextWnd("item_info:no_trade", self.dialog)
+	self.desc     = XMLP:InitTextWnd("item_info:description", self.dialog)
+	
+	-- Stats
+	self.stats_dialog = XMLP:InitStatic("item_info:stats_dialog", self.dialog)
+	self.stats = {}
+	for i=1,16 do
+		self.stats[i]        = {}
+		self.stats[i].base   = XMLP:InitStatic("item_info:stats_box", self.stats_dialog)
+		self.stats[i].icon   = XMLP:InitStatic("item_info:stats_box:icon", self.stats[i].base)
+		self.stats[i].cap    = XMLP:InitTextWnd("item_info:stats_box:cap", self.stats[i].base)
+		self.stats[i].bar2   = XMLP:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
+		self.stats[i].bar1   = XMLP:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
+		self.stats[i].txt    = XMLP:InitTextWnd("item_info:stats_box:prog_txt", self.stats[i].base)
+		self.stats[i].comp   = XMLP:InitTextWnd("item_info:stats_box:compare", self.stats[i].base)
+	end
+	
+	-- Ammo type
+	self.ammo          = XMLP:InitStatic("item_info:ammo_type", self.dialog)
+	self.ammo_cap      = XMLP:InitStatic("item_info:ammo_type:cap_ammo_types", self.ammo)
+	self.ammo_txt      = XMLP:InitTextWnd("item_info:ammo_type:cap_ammo_used_type", self.ammo)
+	self.ammo_ico      = {}
+	self.ammo_ico_temp = {}
+	for i=1,12 do
+		if self.ammo_parse[i] then
+			self.ammo_ico[i] = XMLP:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
+			self.ammo_ico_temp[i] = XMLP:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
+		end
+	end
+end
+
+function Porky_UIInfoItem:Update(obj, sec, flags)
+	if not self:Pass(obj, sec) then
+		self:Show(false)
+		return
+	end
+	
+	-- no need to process if it's same item
+	if obj then
+		if obj:id() == self.id then
+			self:Show(true)
+			return
+		end
+	elseif sec then
+		if sec == self.section then
+			self:Show(true)
+			return
+		end
+	end
+	
+	-- gather basic info
+	sec = obj and obj:section() or sec
+	local typ = self:GetType(sec)
+	--printf("-updating | section [%s] - type: %s", sec, typ)
+	
+	self.id = obj and obj:id() or nil
+	self.section = sec
+		
+	-- Name
+	local name = obj and ui_item.get_obj_name(obj) or ui_item.get_sec_name(sec)
+	self.name:SetText( name )
+	
+	-- Weight
+	local weight = obj and obj:weight() or ini_sys:r_float_ex(sec,"inv_weight")
+	self.weight:SetText( round_100(weight) .. " " .. game.translate_string("st_kg") )
+	
+	-- Cost
+	if flags and flags.value_str and (not flags.note_str) then
+		self.value:SetText( flags.value_str )
+		self.value:Show(true)
+	else
+		self.value:Show(false)
+	end
+	
+	-- Note
+	if flags and flags.note_str then
+		self.note:SetText( flags.note_str )
+		self.note:Show(true)
+	else
+		self.note:Show(false)
+	end
+	
+	-- Description
+	local desc = obj and ui_item.get_obj_desc(obj) or ui_item.get_sec_desc(sec)
+	self.desc:SetText( desc )
+	self.desc:AdjustHeightToText()
+	
+	-- Stop here?
+	if self:Sync_Finale( (not utils_ui.stats_table[typ]), nil, self.desc, self.frame, 10 ) then
+		self.stats_dialog:Show(false)
+		self.ammo:Show(false)
+		return
+	end
+	
+	-- Stats
+	for i=1,#self.stats do
+		self.stats[i].base:Show(false)
+	end
+	
+	-- Comparison
+	local obj_b
+	if self.can_compare and obj then
+		local cls = obj:clsid()
+		local slot = SYS_GetParam(2,sec,"slot",-1) + 1
+		obj_b = slot > 0 and db.actor:item_in_slot(slot)
+	end
+	
+	local v = utils_ui.stats_table[typ]
+	local cnt, y = 0, 0
+	local cnt_last
+	for stat,gr in spairs(v,sort_by_index) do
+		
+		-- get stat value
+		local val_a = utils_ui.get_stats_value(obj, sec, gr, stat)
+		if val_a then
+			if gr.show_always or ((not gr.show_always ) and val_a ~= 0) then
+				cnt = cnt + 1
+				local ele = self.stats[cnt]
+				
+				-- Set up icon
+				local icon_p = gr.icon_p
+				local icon_n = (gr.icon_n ~= "") and gr.icon_n or icon_p
+				local icon = val_a < 0 and icon_n or icon_p
+				if gr.sign_inverse then
+					icon = val_a < 0 and icon_p or icon_n
+				end
+				ele.icon:InitTexture( icon )
+				
+				-- Set up name
+				ele.cap:SetText( game.translate_string(gr.name) )
+				
+				-- Reset
+				ele.bar2:Show(false)
+				ele.bar1:Show(false)
+				ele.txt:Show(false)
+				ele.comp:Show(false)
+				
+				-- Progress bar
+				if gr.track then
+					local valbar_a = clamp((math.abs(val_a) * gr.magnitude), 0, 1)
+					
+					-- Comparison item
+					local val_b = obj_b and utils_ui.get_stats_value(obj_b, obj_b:section(), gr, stat)
+					local valbar_b = val_b and clamp((math.abs(val_b) * gr.magnitude), 0, 1)
+					if valbar_b and (valbar_a ~= valbar_b) then
+					
+						-- If focued item's value is bigger than slot item's value -> focued item's bar: green + 2nd layer
+						if valbar_a > valbar_b then
+							ele.bar1:SetProgressPos( valbar_b )
+							ele.bar1:SetColor( clr_list["info_def"] )
+							
+							ele.bar2:SetProgressPos( valbar_a )
+							ele.bar2:SetColor( clr_list["info_p"] )
+							
+							ele.comp:SetTextColor( clr_list["info_p_txt"] )
+							
+						-- If focued item's value is smaller than slot item's value -> focued item's bar: red + 1nd layer
+						else
+							ele.bar1:SetProgressPos( valbar_a )
+							ele.bar1:SetColor( clr_list["info_def"] )
+							
+							ele.bar2:SetProgressPos( valbar_b )
+							ele.bar2:SetColor( clr_list["info_n"] )
+							
+							ele.comp:SetTextColor( clr_list["info_n_txt"] )
+						end
+						
+						local diff_val = math.ceil( (valbar_a - valbar_b) * 100 )
+						ele.comp:SetText( (diff_val > 0 and "+" or "") .. diff_val .. "%" )
+						ele.comp:Show(true)
+						ele.bar1:Show(true)
+						ele.bar2:Show(true)
+						ele.bar1:ShowBackground(false)
+						
+					-- No comparison
+					else
+						ele.bar1:SetProgressPos( valbar_a )
+						ele.bar1:SetColor( clr_list["info_def"] )
+						ele.bar1:Show(true)
+						ele.bar1:ShowBackground(true)
+					end
+					
+				-- Text
+				elseif ele.txt then
+					local valbar_a = val_a * gr.magnitude
+					local unit = gr.unit and gr.unit ~= "" and game.translate_string(gr.unit) or ""
+					local clr = valbar_a >= 0 and clr_list["p1"] or clr_list["n1"]
+					valbar_a = math.ceil(valbar_a)
+					
+					if gr.sign_inverse then
+						clr = valbar_a < 0 and clr_list["p1"] or clr_list["n1"]
+						--valbar_a = -1 * valbar_a -- invert sign again if needed
+					end
+					local sign = gr.sign and valbar_a > 0 and "+" or ""
+
+					-- Comparison item
+					local val_b = obj_b and utils_ui.get_stats_value(obj_b, obj_b:section(), gr, stat)
+					local valbar_b = val_b and val_b * gr.magnitude
+					if valbar_b and (valbar_a ~= valbar_b) then
+						local diff_val = math.ceil(valbar_a - valbar_b)
+						ele.comp:SetText( "(" .. (diff_val > 0 and "+" or "") .. diff_val .. ")" )
+						ele.comp:Show(true)
+						clr = (valbar_a > valbar_b) and clr_list["info_p_txt"] or clr_list["info_n_txt"]
+					end
+					
+					if gr.sign_inverse_txt then
+						if valbar_a > 0 then
+							sign = "-"
+						elseif valbar_a < 0 then
+							valbar_a = -1 * valbar_a
+							sign = "+"
+						end
+					end
+					
+					ele.txt:SetText( sign .. valbar_a .. " " .. unit )
+					ele.txt:SetTextColor( clr )
+					ele.txt:Show(true)
+				end
+				
+				
+				y = y + ele.base:GetHeight()
+				--printf("stat ele [%s] [%s] | cnt: %s - y: %s - value: %s", sec, stat, cnt, y, val_a)
+				
+				local ele_prev = cnt_last and self.stats[cnt_last]
+				self:Sync_Y(ele_prev and ele_prev.base, ele.base, 0)
+				cnt_last = cnt
+
+				ele.base:Show(true)
+			end
+		end
+	end
+
+	self.stats_dialog:SetWndSize(vector2():set( self.stats_dialog:GetWidth() , y + 10 ))
+	self.stats_dialog:Show(true)
+	
+	-- Stop here?
+	-- if self:Sync_Finale( (typ ~= "weapon"), self.desc, self.stats_dialog, self.frame, 10 ) then
+	-- 	self.ammo:Show(false)
+	-- 	return
+	-- end
+	
+	-- Ammo type
+	if (typ == "weapon") then
+		local ammo_list = utils_item.get_ammo(sec, self.id, nil)
+		local ammo_name = ini_sys:r_string_ex(ammo_list[1], "inv_name_short") or ""
+		self.ammo_txt:SetText( game.translate_string(ammo_name) )
+		for i=1,12 do
+			if self.ammo_ico[i] then
+				if ammo_list[i] and (ammo_list[i] ~= "ammo_12x70_buck_self") then
+					utils_xml.set_icon(ammo_list[i], nil, self.ammo_ico[i], self.ammo_ico_temp[i])
+					self.ammo_ico[i]:Show(true)
+					self.ammo_ico_temp[i]:Show(true)
+				else
+					self.ammo_ico[i]:Show(false)
+					self.ammo_ico_temp[i]:Show(false)
+				end
+			end
+		end
+		
+		self.ammo:Show(true)
+	else
+		self.ammo:Show(false)
+	end
+
+	-- Finale
+	self:Sync_Finale( true, self.stats_dialog, self.ammo, self.frame, 10 )
+	return
+end
+
+function Porky_UIInfoItem:Pass(obj, sec)
+
+	-- hide when no info is passed
+	if not (obj or sec) then
+		self:Reset()
+		return false
+	end
+	
+	-- anticipate different object 
+	if self.id then
+		if (not obj) then
+			self:Reset()
+			return false
+		else
+			if (obj:id() == self.id) then
+				return true
+			else
+				self:Reset()
+				return false
+			end
+		end
+	end
+	
+	-- anticipate different section 
+	if self.section then
+		if (not sec) then
+			self:Reset()
+			return false
+		else
+			if (sec == self.section) then
+				return true
+			else
+				self:Reset()
+				return false
+			end
+		end
+	end
+	
+	-- delay
+	local tg = get_time()
+	if (tg < self.timer + self.delay) then
+		return false
+	end
+	
+	self.timer = tg
+	return true
+end
+
+function Porky_UIInfoItem:GetType(sec)
+	if ini_sys:r_string_ex(sec, "ammo_class") and (not IsItem("fake_ammo_wpn", sec)) then
+		return "weapon"
+	elseif IsItem("outfit", sec) or IsItem("helmet", sec) then 
+		return "outfit"
+	elseif IsItem("artefact", sec) then
+		return "artefact"
+	elseif IsItem("consumable", sec) then
+		return "booster"
+	elseif IsItem("backpack", sec) then
+		return "backpack"
+	end
+	return "none"
+end
+
+function Porky_UIInfoItem:GetUpgrades(obj)
+	if obj and IsWeapon(obj) and has_upgrades(obj) then
+		return utils_item.get_upgrades_installed(nil, obj:id())
+	end
+	return nil
+end
+
+-- function Porky_UIInfoItem:Sync_Finale(cond, ele_syncer, ele_resizer, ele_adapter, offset)
+
+-- -- Stage 1: syncing
+-- -- Adjust element position (ele_resizer) to go below another (ele_syncer)
+-- 	if ele_syncer then
+-- 		self:Sync_Y(ele_syncer, ele_resizer, offset)
+-- 	end
+
+-- -- Stage 2: checking
+-- -- if condition is true, go to stage 3 to finilize the info box
+-- 	if (not cond) then
+-- 		return false
+-- 	end
+	
+-- -- Stage 3: resizng
+-- -- Adjust elemet height (ele_adapter) to contain another (ele_resizer)
+-- 	self:Sync_H(ele_resizer, ele_adapter, offset)
+-- 	self:Show(true)
+-- 	return true
+-- end
+
+-- function Porky_UIInfoItem:Sync_Y(parent, child, offset)
+-- 	local pos_c = child:GetWndPos()
+-- 	if (not parent) then
+-- 		local y = 0 + (offset or 10)
+-- 		child:SetWndPos(vector2():set( pos_c.x , y ))
+-- 		return y
+-- 	end
+	
+-- 	local pos_p = parent:GetWndPos()
+-- 	local h_p = parent:GetHeight()
+-- 	local y = pos_p.y + h_p + (offset or 10)
+-- 	child:SetWndPos(vector2():set( pos_c.x , y ))
+-- 	return y
+-- end
+
+-- function Porky_UIInfoItem:Sync_H(parent, child, offset)
+-- 	local pos_p = parent:GetWndPos()
+-- 	local h_p = parent:GetHeight()
+-- 	local h = pos_p.y + h_p + offset
+-- 	if h < 300 then h = 300 end
+-- 	child:SetWndSize(vector2():set( child:GetWidth() , h ))
+-- 	return h
+-- end
+
+-- function Porky_UIInfoItem:Reset_Y(ele)
+-- 	ele:SetWndPos(vector2():set( ele:GetWndPos().x , 0 ))
+-- end
+
+function Porky_UIInfoItem:Reset()
+	self.id = nil
+	self.section = nil
+	self.timer = get_time()
+end
+
+function Porky_UIInfoItem:IsShown()
+	return self.dialog:IsShown()
+end
+
+function Porky_UIInfoItem:Show(state)
+	if state == false then
+		-- hide all extended info
+		self.stats_dialog:Show(false)
+		self.ammo:Show(false)
+	end
+	
+	self.dialog:Show(state)
+end

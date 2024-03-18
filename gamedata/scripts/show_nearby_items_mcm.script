@@ -1,0 +1,104 @@
+--
+-- ShowNearbyItems v0.0.1
+-- Last modified: 12.10.2024 (dd.mm.yyyy)
+-- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
+--
+
+-------------------------------------------------------------------------------------------------------
+-- Variables
+-------------------------------------------------------------------------------------------------------
+
+SHOW_NEARBY_ITEMS_ENABLED = true
+SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = 15
+SHOW_NEARBY_ITEMS_KEY = DIK_keys.DIK_F
+SHOW_NEARBY_ITEMS_MODE = 0
+SHOW_NEARBY_ITEMS_MODIFIER = 3
+
+MCM_KEYBINDS = ui_mcm and ui_mcm.key_hold
+
+-------------------------------------------------------------------------------------------------------
+-- MCM On Load
+-------------------------------------------------------------------------------------------------------
+
+function on_mcm_load()
+	op = { 
+    id = "porky_show_nearby_items",
+    sh = true,
+    gr = {
+			{
+                id = "showNearbyItemsTitle", 
+                type = "slide", 
+                link = "ui_options_slider_player", 
+                text = "Porkys - Show Nearby Items", 
+                size = {512,50}, 
+                spacing = 20
+            },
+			{
+                id = "showNearbyItemsEnabled", 
+                type = "check", 
+                val = 1, 
+                def = SHOW_NEARBY_ITEMS_ENABLED
+            },
+            {
+                id = "showNearbyItemsDetectionDistance",
+                type = "track",
+                val = 2,
+                min = 1,
+                max = 50,
+                step = 1,
+                def = SHOW_NEARBY_ITEMS_DETECTION_DISTANCE
+            },
+			{
+                id = "showNearbyItemsKey", 
+                type = "key_bind", 
+                val = 2, 
+                def = SHOW_NEARBY_ITEMS_KEY
+            },
+	        {
+                id = "showNearbyItemsKeyModifier", 
+                type = ui_mcm.kb_mod_radio, 
+                val = 2, 
+                def = SHOW_NEARBY_ITEMS_MODIFIER, 
+                hint = "mcm_kb_modifier", 
+                content= { 
+                    {0, "mcm_kb_mod_none"}, 
+                    {1, "mcm_kb_mod_shift"}, 
+                    {2, "mcm_kb_mod_ctrl"}, 
+                    {3, "mcm_kb_mod_alt"}
+                }
+            },
+			{
+                id = "showNearbyItemsKeyMode", 
+                type = ui_mcm.kb_mod_radio, 
+                val = 2, 
+                def = SHOW_NEARBY_ITEMS_MODE, 
+                hint = "mcm_kb_mode", 
+                content= { 
+                    {0, "mcm_kb_mode_press"}, 
+                    {1, "mcm_kb_mode_dtap"},
+                    {2, "mcm_kb_mode_hold"}
+                }
+            },
+        }
+	}
+	return op
+end
+
+-------------------------------------------------------------------------------------------------------
+-- Main Callbacks
+-------------------------------------------------------------------------------------------------------
+
+function on_option_change(mcm)
+    if mcm then
+        SHOW_NEARBY_ITEMS_ENABLED = ui_mcm.get("porky_show_nearby_items/showNearbyItemsEnabled")
+        SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsDetectionDistance")
+        SHOW_NEARBY_ITEMS_KEY = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKey") or SHOW_NEARBY_ITEMS_KEY
+        SHOW_NEARBY_ITEMS_MODE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKeyMode")
+        SHOW_NEARBY_ITEMS_MODIFIER = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKeyModifier")
+    end
+  end
+  
+  function on_game_start()
+      RegisterScriptCallback("on_option_change", on_option_change)
+      on_option_change(MCM_KEYBINDS)
+  end

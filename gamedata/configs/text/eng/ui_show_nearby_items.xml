@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+	<string id="ui_mcm_menu_porky_show_nearby_items">
+		<text>Show Nearby Items</text>
+	</string>
+	<string id="ui_mcm_porky_show_nearby_items_showNearbyItemsTitle">
+		<text>SNI - Show Nearby Items</text>
+	</string>
+	<string id="ui_mcm_porky_show_nearby_items_showNearbyItemsEnabled">
+		<text>Enable SNI - Show Nearby Items</text>
+	</string>
+	<string id="ui_mcm_porky_show_nearby_items_showNearbyItemsEnabled_desc">
+		<text>Enables the "Show Nearby Items" feature, which allows the player to toggle on/off ground items UI windows.</text>
+	</string>
+    <string id="ui_mcm_porky_show_nearby_items_showNearbyItemsDetectionDistance">
+        <text>Detection Distance for Show Nearby Items</text>
+    </string>
+	<string id="ui_mcm_porky_show_nearby_items_showNearbyItemsKey">
+		<text>Keybind for SNI - Show Nearby Items</text>
+	</string>
+	<string id="ui_mcm_porky_tar_toggleAutoRunKey_desc">
+		<text>Enter the keybind you would like to use for toggling Show Nearby Items.</text>
+	</string>
+</string_table>

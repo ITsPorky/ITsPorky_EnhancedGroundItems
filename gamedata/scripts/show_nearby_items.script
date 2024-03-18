@@ -1,0 +1,412 @@
+--
+-- ShowNearbyItems v0.0.1
+-- Last modified: 15.03.2024 (dd.mm.yyyy)
+-- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
+--
+
+-------------------------------------------------------------------------------------------------------
+-- Variables
+-------------------------------------------------------------------------------------------------------
+
+local isToggled = false
+--Object in players view (at crosshair / center screen)
+local targetObject = nil
+
+local counter = 0
+
+-------------------------------------------------------------------------------------------------------
+-- Utility Functions
+-------------------------------------------------------------------------------------------------------
+-- HUD Start
+HUD = nil
+
+function hud_active()
+	if (HUD == nil) then
+		HUD = ui_show_nearby_items()
+		get_hud():AddDialogToRender(HUD)
+	end
+end
+
+function hud_remove()
+	if (HUD) then
+		get_hud():RemoveDialogToRender(HUD)
+		HUD = nil
+	end
+end
+
+function hud_update()
+	if (HUD) then
+		HUD:Update(true)
+	end
+end
+
+-- HUD End
+
+function object_by_id(id)
+	return id and (db.storage[id] and db.storage[id].object or level.object_by_id(id))
+end
+
+function toggle_show_items()
+  if(isToggled) then
+    isToggled = false
+    news_manager.send_tip(db.actor, "Toggle disabled...")
+  else
+    isToggled = true
+    news_manager.send_tip(db.actor, "Toggle enabled...")
+  end
+end
+
+-- Class Start
+class "ui_show_nearby_items" (CUIScriptWnd) 
+
+  local item_classes = {
+    -- Objects
+    [clsid.artefact] = true,
+    [clsid.obj_antirad] = true,
+    [clsid.obj_attachable] = true,
+    [clsid.obj_bandage] = true,
+    [clsid.obj_bolt] = true,
+    [clsid.obj_bottle] = true,
+    [clsid.obj_document] = true,
+    [clsid.obj_explosive] = true,
+    [clsid.obj_food] = true,
+    [clsid.obj_medkit] = true,
+    [clsid.artefact_s] = true,
+    [clsid.obj_explosive_s] = true,
+    [clsid.obj_food_s] = true,
+    [clsid.device_torch_s] = true,
+    -- Devices
+    [clsid.detector_advanced_s] = true,
+    [clsid.detector_elite_s] = true,
+    [clsid.detector_scientific_s] = true,
+    [clsid.detector_simple_s] = true,
+    [clsid.device_detector_advanced] = true,
+    [clsid.device_custom] = true,
+    [clsid.device_dosimeter] = true,
+    [clsid.device_detector_elite] = true,
+    [clsid.device_flashlight] = true,
+    [clsid.device_flare] = true,
+    [clsid.device_pda] = true,
+    [clsid.device_detector_scientific] = true,
+    [clsid.device_detector_simple] = true,
+    [clsid.device_torch] = true,
+    -- Equipment/Outfits
+    [clsid.equ_exo] = true,
+    [clsid.equ_military] = true,
+    [clsid.equ_scientific] = true,
+    [clsid.equ_stalker] = true,
+    [clsid.equ_backpack] = true,
+    [clsid.helmet] = true,
+    [clsid.equ_helmet_s] = true,
+    [clsid.equ_stalker_s] = true,
+    -- Weapons
+    [clsid.wpn_ammo_m209_s] = true,
+    [clsid.wpn_ammo_og7b_s] = true,
+    [clsid.wpn_ak74_s] = true,
+    [clsid.wpn_auto_shotgun_s] = true,
+    [clsid.wpn_binocular_s] = true,
+    [clsid.wpn_bm16_s] = true,
+    [clsid.wpn_grenade_launcher_s] = true,
+    [clsid.wpn_groza_s] = true,
+    [clsid.wpn_hpsa_s] = true,
+    [clsid.wpn_knife_s] = true,
+    [clsid.wpn_lr300_s] = true,
+    [clsid.wpn_pm_s] = true,
+    [clsid.wpn_rg6_s] = true,
+    [clsid.wpn_rpg7_s] = true,
+    [clsid.wpn_scope_s] = true,
+    [clsid.wpn_shotgun_s] = true,
+    [clsid.wpn_silencer_s] = true,
+    [clsid.wpn_svd_s] = true,
+    [clsid.wpn_svu_s] = true,
+    [clsid.wpn_usp45_s] = true,
+    [clsid.wpn_val_s] = true,
+    [clsid.wpn_vintorez_s] = true,
+    [clsid.wpn_walther_s] = true,
+    [clsid.wpn_ak74] = true,
+    [clsid.wpn_binocular] = true,
+    [clsid.wpn_bm16] = true,
+    [clsid.wpn_fn2000] = true,
+    [clsid.wpn_fort] = true,
+    [clsid.wpn_grenade_launcher] = true,
+    [clsid.wpn_groza] = true,
+    [clsid.wpn_hpsa] = true,
+    [clsid.wpn_knife] = true,
+    [clsid.wpn_lr300] = true,
+    [clsid.wpn_pm] = true,
+    [clsid.wpn_rg6] = true,
+    [clsid.wpn_rpg7] = true,
+    [clsid.wpn_scope] = true,
+    [clsid.wpn_shotgun] = true,
+    [clsid.wpn_silencer] = true,
+    [clsid.wpn_stat_mgun] = true,
+    [clsid.wpn_svd] = true,
+    [clsid.wpn_svu] = true,
+    [clsid.wpn_usp45] = true,
+    [clsid.wpn_val] = true,
+    [clsid.wpn_vintorez] = true,
+    [clsid.wpn_walther] = true,
+    [clsid.wpn_wmagaz] = true,
+    [clsid.wpn_wmaggl] = true,
+    [clsid.wpn_grenade_rgd5] = true,
+    [clsid.wpn_grenade_rgd5_s] = true,
+    [clsid.wpn_grenade_rpg7] = true,
+    [clsid.wpn_grenade_f1] = true,
+    [clsid.wpn_grenade_f1_s] = true,
+    [clsid.wpn_grenade_fake] = true,
+    [clsid.wpn_ammo_m209] = true,
+    [clsid.wpn_ammo_og7b] = true,
+    [clsid.wpn_ammo_vog25] = true,
+    [clsid.wpn_ammo] = true,
+    [clsid.wpn_ammo_s] = true,
+  }
+
+  local anomaly_classes = {
+    [clsid.zone]				= true,
+    [clsid.ameba_zone]			= true,
+    [clsid.zone_ameba_s]		= true,
+    [clsid.zone_acid_fog]		= true,
+    [clsid.zone_campfire]		= true,
+    [clsid.zone_dead]			= true,
+    [clsid.zone_rusty_hair]		= true,
+    [clsid.zone_bfuzz]			= true,
+    [clsid.zone_bfuzz_s]		= true,
+    [clsid.zone_mosquito_bald]	= true,
+    [clsid.zone_mbald_s]		= true,
+    [clsid.zone_galantine]		= true,
+    [clsid.zone_galant_s]		= true,
+    [clsid.zone_mincer]			= true,
+    [clsid.zone_mincer_s]		= true,
+  --	[clsid.zone_radioactive]	= true,
+  --	[clsid.zone_radio_s]		= true,
+    [clsid.torrid_zone]			= true,
+    [clsid.zone_torrid_s]		= true,
+    [clsid.nogravity_zone]		= true,
+    [clsid.zone_nograv_s]		= true,
+  }
+
+  function ui_show_nearby_items:__init() super()
+    self.xml = CScriptXmlInit()
+    self.xml:ParseFile("ui_porky_show_nearby_items.xml")
+    self.ratio = (1024/768)/(device().width/device().height)
+
+    self.item_table = {}
+    self.ui_table = {}
+    self.marker_table = {}
+    self.update_timer = 0
+    self.update_delay = 100
+  end
+
+  function ui_show_nearby_items:__finalize()
+    for id,_ in pairs(self.ui_table) do
+      self.ui_table[id]:Show(false)
+      self.ui_table[id] = nil
+    end
+    -- remove if doesnt work
+    for id,_ in pairs(self.marker_table) do
+      self.marker_table[id]:Show(false)
+      self.marker_table[id] = nil
+    end
+  end
+
+  function ui_show_nearby_items:Update()
+    CUIScriptWnd.Update(self)
+    self:UpdateObject()
+    self:UpdateUI()
+  end
+
+  function ui_show_nearby_items:UpdateObject()
+    if(self.update_timer > time_global()) then
+      -- Not ready for update yet, continue
+      return
+    end
+
+    -- Get time for next update
+    self.update_timer = time_global() + self.update_delay
+
+    -- Do block to contain scoping of self.show_item
+    do
+      self.show_item = show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED and main_hud_shown() or false
+    end
+
+    -- Actor position
+    local pos = db.actor:position()
+
+    -- Remove invalid objects
+    for id,_ in pairs(self.item_table) do
+      local obj = object_by_id(id)
+      if not (self:ValidateItem(obj, pos)) then
+        self.item_table[id] = nil
+      end
+    end
+
+    -- Loop through in game objects
+    for obj in game_objects_iter() do
+      if(self:ValidateItem(obj, pos)) then
+        if(self.item_table[obj:id()] == nil) then
+          self.item_table[obj:id()] = true
+        end
+      end  
+    end
+  end
+
+  function ui_show_nearby_items:UpdateUI()
+    for id,_ in pairs(self.item_table) do
+      -- Create UI windows if it doesn't exist
+      if (self.ui_table[id] == nil) then
+        local obj = object_by_id(id)
+        -- self.ui_table[id] = self.xml:InitStatic(utils_ui.UIInfoItem(obj), self)
+        self.ui_table[id] = self.xml:InitStatic(self:GetUIWindow(id), self)
+        self:ApplyScreenRatio(self.ui_table[id])
+        self.ui_table[id]:SetStretchTexture(true)
+        self.ui_table[id]:Show(false)
+      end
+      -- Create Marker UI if it doesn't exist
+      if (self.marker_table[id] == nil) then
+        self.marker_table[id] = self.xml:InitStatic(self:GetUIMark(id), self)
+        self:ApplyScreenRatio(self.marker_table[id])
+        self.marker_table[id]:SetStretchTexture(true)
+        self.marker_table[id]:Show(false)
+      end
+    end
+
+    for id,_ in pairs(self.ui_table) do
+      -- Update markers.
+      if (self.item_table[id]) then
+        local obj = object_by_id(id)
+        local pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
+        local vec = pos and game.world2ui(pos, false, false)
+
+        -- Check if screen position is valid
+        if (self:ScreenPosValid(vec)) then
+          -- Update UI Windows
+          self.ui_table[id]:SetWndPos(vec)
+          -- Update UI Markers
+          self.marker_table[id]:SetWndPos(vec)
+        end
+
+        --Object in players view (at crosshair / center screen)
+        local targetObject = level.get_target_obj() or nil
+
+        -- Check if player is looking at object
+        if(targetObject ~= nil and id == targetObject:id()) then
+          self.ui_table[id]:Show(true)
+          self.marker_table[id]:Show(false)
+
+        else
+          self.marker_table[id]:Show(true)
+          self.ui_table[id]:Show(false)
+        end
+      else
+        -- Remove markers.
+        self.ui_table[id]:Show(false)
+        self.ui_table[id] = nil
+        self.marker_table[id]:Show(false)
+        self.marker_table[id] = nil
+      end
+    end
+  end
+
+  function ui_show_nearby_items:ValidateItem(obj, pos)
+    -- Check if item is shown
+    if not (self.show_item) then
+      return false
+    end
+    -- Check if is valid item
+    if not (self:IsItem(obj)) then
+      return false
+    end
+    -- Check if is held by player or NPC
+    -- if(obj:is_inventory_item()) then 
+
+    -- end
+    -- Check if item is in detection range
+    if(obj:position():distance_to_sqr(pos) < math.pow(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_DETECTION_DISTANCE, 2)) then
+      if(isToggled and show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED) then
+        return true
+      end
+    end
+    return false
+  end 
+
+  function ui_show_nearby_items:IsItem(obj)
+    -- Add conditional logic for if item is held by actor or npc
+    -- then item is not valid
+    local cls = obj and obj:clsid()
+    return item_classes[cls] or false
+  end
+
+  function ui_show_nearby_items:GetUIWindow(id)
+    return "porky_item_mini_spot" -- Display item info window
+  end
+
+  function ui_show_nearby_items:GetUIMark(id)
+    return "porky_item_spot" -- Display item marker
+  end
+
+  function ui_show_nearby_items:ScreenPosValid(vec)
+    return (vec.x ~= -9999) and (vec.y ~= 0) and (vec.x <= 1024) and (vec.y <= 768)
+  end
+  
+  function ui_show_nearby_items:ApplyScreenRatio(ele)
+    if (ele) then
+      ele:SetWndSize(vector2():set(ele:GetWidth() * (self.ratio or 1), ele:GetHeight()))
+    end
+  end
+
+-- Class end
+
+-------------------------------------------------------------------------------------------------------
+-- Callbacks/ Listeners
+-------------------------------------------------------------------------------------------------------
+
+function on_key_press(key)
+  -- shift + f to toggle by default
+  if(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED) then -- Check if addon is Enabled/Disabled in MCM
+    if(key == show_nearby_items_mcm.SHOW_NEARBY_ITEMS_KEY) then  -- Using MCM Check for Single Tap or Double Tap
+
+      -- No MCM case
+      if(not show_nearby_items_mcm.MCM_KEYBINDS) then 
+        toggle_show_items()
+        return
+      end
+      -- MCM Simple Press
+      if (show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODE == 0) and ui_mcm.get_mod_key(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODIFIER) then
+        ui_mcm.simple_press("porky_show_nearby_items", key, toggle_show_items())
+      end
+      -- MCM Double Tap
+      if (show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODE == 1) and ui_mcm.get_mod_key(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODIFIER) and ui_mcm.double_tap("porky_show_nearby_items", key) then
+        toggle_show_items()
+        return
+      end
+
+    end
+  end
+end
+
+function on_show_hide()
+	hud_update()
+end
+
+function actor_on_net_destroy()
+	hud_remove()
+end
+
+function actor_on_first_update()
+	hud_active()
+end
+
+-------------------------------------------------------------------------------------------------------
+-- Register Callbacks
+-------------------------------------------------------------------------------------------------------
+
+-- Main game loop script to register callbacks
+function on_game_start()
+	RegisterScriptCallback("GUI_on_show",on_show_hide)
+	RegisterScriptCallback("GUI_on_hide",on_show_hide)
+	RegisterScriptCallback("actor_on_net_destroy",actor_on_net_destroy)
+	RegisterScriptCallback("actor_on_first_update",actor_on_first_update)
+  RegisterScriptCallback("on_key_press", on_key_press)
+
+  log("[ITsPorkys - Show Nearby Items] - Addon enabled...")
+end
