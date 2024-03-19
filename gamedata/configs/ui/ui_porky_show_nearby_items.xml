@@ -8,7 +8,7 @@
 		<texture r="0" g="128" b="255">ui_pda2_squad_leader</texture>
 	</porky_item_mini_spot>
 
-	<porky_item_info x="0" y="0" width="485" height="170" stretch="1">
+	<item_info x="0" y="0" width="485" height="170" stretch="1">
 		<background_frame x="0" y="0" width="485" height="170" stretch="1">
 			<texture>ui_inGame2_hint_wnd_main_window</texture>
 		</background_frame>
@@ -84,11 +84,11 @@
 			<static_ammo_type12 x="285" y="97" width="80" height="40" stretch="1" />
 		</ammo_type>
 		
-	</porky_item_info>
+	</item_info>
 
 	<!-- ============================ Weapon Info ====================================   -->
 
-	<porky_wpn_params x="0" y="0" width="265" height="170">
+	<wpn_params x="0" y="0" width="265" height="170">
 		<prop_line x="0" y="0" width="260" height="9" stretch="1">
 			<texture>ui_inGame2_hint_wnd_Properties</texture>
 		</prop_line>
@@ -195,11 +195,11 @@
 		<cap_rpm_inc x="262" y="65" width="128" height="9" light_anim="" la_cyclic="1" la_texture="1" la_alpha="1">
 			<text font="letterica16" r="170" g="170" b="170" align="l">dummy</text>
 		</cap_rpm_inc>
-	</porky_wpn_params>
+	</wpn_params>
 
 	<!-- ============================ Outfit Info ====================================   -->
 
-	<porky_outfit_info x="0" y="0" width="265" height="180">
+	<outfit_info x="0" y="0" width="265" height="180">
 		<prop_line x="0" y="0" width="260" height="9" stretch="1">
 			<texture>ui_inGame2_hint_wnd_Properties</texture>
 		</prop_line>
@@ -365,13 +365,5 @@
 				<text font="letterica16" color="ui_6" align="r" vert_align="c"/>
 			</static_value>
 		</explosion_immunity>
-	</porky_outfit_info>
-
-	<anomaly_marker_arte x="0" y="0" width="19" height="19" stretch="1" alignment="c" vert_align="c" location_level="5">
-	    <texture>ui_inGame2_Detector_icon_artefact</texture>
-	</anomaly_marker_arte>
-
-	<background x="0" y="0" width="100" height="50" stretch="1">
-		<texture>ui_inGame2_item_2_background</texture>
-	</background>
+	</outfit_info>
 </w>

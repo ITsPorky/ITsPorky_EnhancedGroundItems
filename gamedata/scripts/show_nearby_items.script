@@ -189,10 +189,13 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     self.xml = CScriptXmlInit()
     self.xml:ParseFile("ui_porky_show_nearby_items.xml")
     self.ratio = (1024/768)/(device().width/device().height)
-
+    -- Item UI Window
+    self.item_info = ui_show_nearby_items_info.UIItemInfo(self)
+    -- Tables for storing marker/UI data
     self.item_table = {}
     self.ui_table = {}
     self.marker_table = {}
+    -- Update timers
     self.update_timer = 0
     self.update_delay = 100
   end
@@ -255,11 +258,11 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Create UI windows if it doesn't exist
       if (self.ui_table[id] == nil) then
         local obj = object_by_id(id)
-        -- self.ui_table[id] = self.xml:InitStatic(utils_ui.UIInfoItem(obj), self)
-        self.ui_table[id] = self.xml:InitStatic(self:GetUIWindow(id), self)
-        self:ApplyScreenRatio(self.ui_table[id])
-        self.ui_table[id]:SetStretchTexture(true)
-        self.ui_table[id]:Show(false)
+        self.ui_table[id] = self.item_info
+        self.item_info:Update()
+        -- self:ApplyScreenRatio(self.ui_table[id])
+        -- self.ui_table[id]:SetStretchTexture(true)
+        -- self.ui_table[id]:Show(false)
       end
       -- Create Marker UI if it doesn't exist
       if (self.marker_table[id] == nil) then
@@ -283,19 +286,22 @@ class "ui_show_nearby_items" (CUIScriptWnd)
           self.ui_table[id]:SetWndPos(vec)
           -- Update UI Markers
           self.marker_table[id]:SetWndPos(vec)
-        end
+          
+          --Object in players view (at crosshair / center screen)
+          local targetObject = level.get_target_obj() or nil
 
-        --Object in players view (at crosshair / center screen)
-        local targetObject = level.get_target_obj() or nil
+          -- Check if player is looking at object
+          if(targetObject ~= nil and id == targetObject:id()) then
+            self.ui_table[id]:Show(true)
+            self.marker_table[id]:Show(false)
 
-        -- Check if player is looking at object
-        if(targetObject ~= nil and id == targetObject:id()) then
-          self.ui_table[id]:Show(true)
-          self.marker_table[id]:Show(false)
-
+          else
+            self.marker_table[id]:Show(true)
+            self.ui_table[id]:Show(false)
+          end
         else
-          self.marker_table[id]:Show(true)
           self.ui_table[id]:Show(false)
+          self.marker_table[id]:Show(false)
         end
       else
         -- Remove markers.

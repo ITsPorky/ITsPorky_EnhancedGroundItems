@@ -1,15 +1,39 @@
+-- Icon coloring base on inventory mode and interaction
+local clr_list = {
+	["def"]         = GetARGB(255, 255, 255, 255),
+	["red"]         = GetARGB(255, 255, 50, 50),
+	["green"]       = GetARGB(255, 100, 255, 150),
+	["blue"]        = GetARGB(255, 100, 150, 255),
+	["black"]       = GetARGB(255, 0, 0, 0),
+	
+	["drag"]        = GetARGB(150, 255, 255, 255),
+	["hide"]        = GetARGB(70, 255, 255, 255),
+	["shadow"]      = GetARGB(200, 20, 20, 20),
+	["hide_shadow"] = GetARGB(70, 20, 20, 20),
+	
+	["p1"]          = GetARGB(255, 170, 170, 170),
+	["n1"]          = GetARGB(255, 200, 50, 50),
+	["p2"]          = GetARGB(255, 51, 255, 102),
+	["n2"]          = GetARGB(255, 204, 0, 51),
+	
+	["info_def"]    = GetARGB(200, 255, 255, 255),
+	["info_p"]      = GetARGB(255, 56, 209, 115),
+	["info_n"]      = GetARGB(255, 238, 28, 36),
+	["info_p_txt"]  = GetARGB(200, 100, 255, 100),
+	["info_n_txt"]  = GetARGB(200, 255, 100, 100),
+}
+
 -------------------------------------------------------------------
 -- Item info box
 -------------------------------------------------------------------
 
-class "Porky_UIInfoItem"
+class "UIItemInfo"
 
-function Porky_UIInfoItem:__init(owner, delay)
+function UIItemInfo:__init(owner, delay)
 	self.owner = owner
 	self.id = nil
 	self.section = nil
 	
-	self.can_compare = false
 	self.timer = 0
 	self.delay = delay or 700
 	self.ammo_parse = { [1]=true , [4] = true , [7] = true , [10] = true }
@@ -20,50 +44,49 @@ function Porky_UIInfoItem:__init(owner, delay)
 	self:Show(false)
 end
 
-function Porky_UIInfoItem:InitControls()
-	--[[
-	self.xml				= CScriptXmlInit()
-	local xml = self.xml
-	xml:ParseFile			("ui_item_info.xml")
-	--]]
-	self.dialog = XMLP:InitStatic("item_info", self.owner)
+function UIItemInfo:InitControls()
+
+	self.xml = CScriptXmlInit()
+	self.xml:ParseFile("ui_porky_show_nearby_items.xml")
+
+	self.dialog = self.xml:InitStatic("item_info", self.owner)
 	
-	self.frame    = XMLP:InitFrame("item_info:background_frame", self.dialog)
-	self.name     = XMLP:InitTextWnd("item_info:name", self.dialog)
-	self.weight   = XMLP:InitTextWnd("item_info:weight", self.dialog)
-	self.value     = XMLP:InitTextWnd("item_info:cost", self.dialog)
-	self.note 	  = XMLP:InitTextWnd("item_info:no_trade", self.dialog)
-	self.desc     = XMLP:InitTextWnd("item_info:description", self.dialog)
+	self.frame    = self.xml:InitFrame("item_info:background_frame", self.dialog)
+	self.name     = self.xml:InitTextWnd("item_info:name", self.dialog)
+	self.weight   = self.xml:InitTextWnd("item_info:weight", self.dialog)
+	self.value     = self.xml:InitTextWnd("item_info:cost", self.dialog)
+	self.note 	  = self.xml:InitTextWnd("item_info:no_trade", self.dialog)
+	self.desc     = self.xml:InitTextWnd("item_info:description", self.dialog)
 	
 	-- Stats
-	self.stats_dialog = XMLP:InitStatic("item_info:stats_dialog", self.dialog)
+	self.stats_dialog = self.xml:InitStatic("item_info:stats_dialog", self.dialog)
 	self.stats = {}
 	for i=1,16 do
 		self.stats[i]        = {}
-		self.stats[i].base   = XMLP:InitStatic("item_info:stats_box", self.stats_dialog)
-		self.stats[i].icon   = XMLP:InitStatic("item_info:stats_box:icon", self.stats[i].base)
-		self.stats[i].cap    = XMLP:InitTextWnd("item_info:stats_box:cap", self.stats[i].base)
-		self.stats[i].bar2   = XMLP:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
-		self.stats[i].bar1   = XMLP:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
-		self.stats[i].txt    = XMLP:InitTextWnd("item_info:stats_box:prog_txt", self.stats[i].base)
-		self.stats[i].comp   = XMLP:InitTextWnd("item_info:stats_box:compare", self.stats[i].base)
+		self.stats[i].base   = self.xml:InitStatic("item_info:stats_box", self.stats_dialog)
+		self.stats[i].icon   = self.xml:InitStatic("item_info:stats_box:icon", self.stats[i].base)
+		self.stats[i].cap    = self.xml:InitTextWnd("item_info:stats_box:cap", self.stats[i].base)
+		self.stats[i].bar2   = self.xml:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
+		self.stats[i].bar1   = self.xml:InitProgressBar("item_info:stats_box:prog_bar", self.stats[i].base)
+		self.stats[i].txt    = self.xml:InitTextWnd("item_info:stats_box:prog_txt", self.stats[i].base)
+		self.stats[i].comp   = self.xml:InitTextWnd("item_info:stats_box:compare", self.stats[i].base)
 	end
 	
 	-- Ammo type
-	self.ammo          = XMLP:InitStatic("item_info:ammo_type", self.dialog)
-	self.ammo_cap      = XMLP:InitStatic("item_info:ammo_type:cap_ammo_types", self.ammo)
-	self.ammo_txt      = XMLP:InitTextWnd("item_info:ammo_type:cap_ammo_used_type", self.ammo)
+	self.ammo          = self.xml:InitStatic("item_info:ammo_type", self.dialog)
+	self.ammo_cap      = self.xml:InitStatic("item_info:ammo_type:cap_ammo_types", self.ammo)
+	self.ammo_txt      = self.xml:InitTextWnd("item_info:ammo_type:cap_ammo_used_type", self.ammo)
 	self.ammo_ico      = {}
 	self.ammo_ico_temp = {}
 	for i=1,12 do
 		if self.ammo_parse[i] then
-			self.ammo_ico[i] = XMLP:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
-			self.ammo_ico_temp[i] = XMLP:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
+			self.ammo_ico[i] = self.xml:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
+			self.ammo_ico_temp[i] = self.xml:InitStatic("item_info:ammo_type:static_ammo_type" .. i, self.ammo)
 		end
 	end
 end
 
-function Porky_UIInfoItem:Update(obj, sec, flags)
+function UIItemInfo:Update(obj, sec, flags)
 	if not self:Pass(obj, sec) then
 		self:Show(false)
 		return
@@ -120,7 +143,7 @@ function Porky_UIInfoItem:Update(obj, sec, flags)
 	self.desc:AdjustHeightToText()
 	
 	-- Stop here?
-	if self:Sync_Finale( (not utils_ui.stats_table[typ]), nil, self.desc, self.frame, 10 ) then
+	if (not utils_ui.stats_table[typ]) then
 		self.stats_dialog:Show(false)
 		self.ammo:Show(false)
 		return
@@ -142,7 +165,7 @@ function Porky_UIInfoItem:Update(obj, sec, flags)
 	local v = utils_ui.stats_table[typ]
 	local cnt, y = 0, 0
 	local cnt_last
-	for stat,gr in spairs(v,sort_by_index) do
+	for stat,gr in spairs(v, utils_ui.sort_by_index) do
 		
 		-- get stat value
 		local val_a = utils_ui.get_stats_value(obj, sec, gr, stat)
@@ -297,11 +320,11 @@ function Porky_UIInfoItem:Update(obj, sec, flags)
 	end
 
 	-- Finale
-	self:Sync_Finale( true, self.stats_dialog, self.ammo, self.frame, 10 )
+	-- self:Sync_Finale( true, self.stats_dialog, self.ammo, self.frame, 10 )
 	return
 end
 
-function Porky_UIInfoItem:Pass(obj, sec)
+function UIItemInfo:Pass(obj, sec)
 
 	-- hide when no info is passed
 	if not (obj or sec) then
@@ -340,16 +363,17 @@ function Porky_UIInfoItem:Pass(obj, sec)
 	end
 	
 	-- delay
-	local tg = get_time()
-	if (tg < self.timer + self.delay) then
-		return false
-	end
+	-- local tg = get_time()
+	-- if (tg < self.timer + self.delay) then
+	-- 	return false
+	-- end
 	
-	self.timer = tg
+	-- self.timer = tg
+	
 	return true
 end
 
-function Porky_UIInfoItem:GetType(sec)
+function UIItemInfo:GetType(sec)
 	if ini_sys:r_string_ex(sec, "ammo_class") and (not IsItem("fake_ammo_wpn", sec)) then
 		return "weapon"
 	elseif IsItem("outfit", sec) or IsItem("helmet", sec) then 
@@ -364,14 +388,14 @@ function Porky_UIInfoItem:GetType(sec)
 	return "none"
 end
 
-function Porky_UIInfoItem:GetUpgrades(obj)
+function UIItemInfo:GetUpgrades(obj)
 	if obj and IsWeapon(obj) and has_upgrades(obj) then
 		return utils_item.get_upgrades_installed(nil, obj:id())
 	end
 	return nil
 end
 
--- function Porky_UIInfoItem:Sync_Finale(cond, ele_syncer, ele_resizer, ele_adapter, offset)
+-- function UIItemInfo:Sync_Finale(cond, ele_syncer, ele_resizer, ele_adapter, offset)
 
 -- -- Stage 1: syncing
 -- -- Adjust element position (ele_resizer) to go below another (ele_syncer)
@@ -392,7 +416,7 @@ end
 -- 	return true
 -- end
 
--- function Porky_UIInfoItem:Sync_Y(parent, child, offset)
+-- function UIItemInfo:Sync_Y(parent, child, offset)
 -- 	local pos_c = child:GetWndPos()
 -- 	if (not parent) then
 -- 		local y = 0 + (offset or 10)
@@ -407,7 +431,7 @@ end
 -- 	return y
 -- end
 
--- function Porky_UIInfoItem:Sync_H(parent, child, offset)
+-- function UIItemInfo:Sync_H(parent, child, offset)
 -- 	local pos_p = parent:GetWndPos()
 -- 	local h_p = parent:GetHeight()
 -- 	local h = pos_p.y + h_p + offset
@@ -416,21 +440,21 @@ end
 -- 	return h
 -- end
 
--- function Porky_UIInfoItem:Reset_Y(ele)
+-- function UIItemInfo:Reset_Y(ele)
 -- 	ele:SetWndPos(vector2():set( ele:GetWndPos().x , 0 ))
 -- end
 
-function Porky_UIInfoItem:Reset()
+function UIItemInfo:Reset()
 	self.id = nil
 	self.section = nil
-	self.timer = get_time()
+	self.timer = utils_ui.get_time()
 end
 
-function Porky_UIInfoItem:IsShown()
+function UIItemInfo:IsShown()
 	return self.dialog:IsShown()
 end
 
-function Porky_UIInfoItem:Show(state)
+function UIItemInfo:Show(state)
 	if state == false then
 		-- hide all extended info
 		self.stats_dialog:Show(false)
