@@ -23,6 +23,10 @@ local clr_list = {
 	["info_n_txt"]  = GetARGB(200, 255, 100, 100),
 }
 
+function object_by_id(id)
+	return id and (db.storage[id] and db.storage[id].object or level.object_by_id(id))
+end
+
 -------------------------------------------------------------------
 -- Item info box
 -------------------------------------------------------------------
@@ -33,7 +37,8 @@ function UIItemInfo:__init(owner, delay)
 	self.owner = owner
 	self.id = nil
 	self.section = nil
-	
+
+	self.can_compare = false
 	self.timer = 0
 	self.delay = delay or 700
 	self.ammo_parse = { [1]=true , [4] = true , [7] = true , [10] = true }
@@ -86,7 +91,7 @@ function UIItemInfo:InitControls()
 	end
 end
 
-function UIItemInfo:Update(obj, sec, flags)
+function UIItemInfo:Update(obj, sec)
 	if not self:Pass(obj, sec) then
 		self:Show(false)
 		return
@@ -121,21 +126,21 @@ function UIItemInfo:Update(obj, sec, flags)
 	local weight = obj and obj:weight() or ini_sys:r_float_ex(sec,"inv_weight")
 	self.weight:SetText( round_100(weight) .. " " .. game.translate_string("st_kg") )
 	
-	-- Cost
-	if flags and flags.value_str and (not flags.note_str) then
-		self.value:SetText( flags.value_str )
-		self.value:Show(true)
-	else
-		self.value:Show(false)
-	end
+	-- -- Cost
+	-- if flags and flags.value_str and (not flags.note_str) then
+	-- 	self.value:SetText( flags.value_str )
+	-- 	self.value:Show(true)
+	-- else
+	-- 	self.value:Show(false)
+	-- end
 	
-	-- Note
-	if flags and flags.note_str then
-		self.note:SetText( flags.note_str )
-		self.note:Show(true)
-	else
-		self.note:Show(false)
-	end
+	-- -- Note
+	-- if flags and flags.note_str then
+	-- 	self.note:SetText( flags.note_str )
+	-- 	self.note:Show(true)
+	-- else
+	-- 	self.note:Show(false)
+	-- end
 	
 	-- Description
 	local desc = obj and ui_item.get_obj_desc(obj) or ui_item.get_sec_desc(sec)
@@ -291,10 +296,10 @@ function UIItemInfo:Update(obj, sec, flags)
 	self.stats_dialog:Show(true)
 	
 	-- Stop here?
-	-- if self:Sync_Finale( (typ ~= "weapon"), self.desc, self.stats_dialog, self.frame, 10 ) then
-	-- 	self.ammo:Show(false)
-	-- 	return
-	-- end
+	if self:Sync_Finale( (typ ~= "weapon"), self.desc, self.stats_dialog, self.frame, 10 ) then
+		self.ammo:Show(false)
+		return
+	end
 	
 	-- Ammo type
 	if (typ == "weapon") then
@@ -320,7 +325,7 @@ function UIItemInfo:Update(obj, sec, flags)
 	end
 
 	-- Finale
-	-- self:Sync_Finale( true, self.stats_dialog, self.ammo, self.frame, 10 )
+	self:Sync_Finale( true, self.stats_dialog, self.ammo, self.frame, 10 )
 	return
 end
 
@@ -395,54 +400,54 @@ function UIItemInfo:GetUpgrades(obj)
 	return nil
 end
 
--- function UIItemInfo:Sync_Finale(cond, ele_syncer, ele_resizer, ele_adapter, offset)
+function UIItemInfo:Sync_Finale(cond, ele_syncer, ele_resizer, ele_adapter, offset)
 
--- -- Stage 1: syncing
--- -- Adjust element position (ele_resizer) to go below another (ele_syncer)
--- 	if ele_syncer then
--- 		self:Sync_Y(ele_syncer, ele_resizer, offset)
--- 	end
+-- Stage 1: syncing
+-- Adjust element position (ele_resizer) to go below another (ele_syncer)
+	if ele_syncer then
+		self:Sync_Y(ele_syncer, ele_resizer, offset)
+	end
 
--- -- Stage 2: checking
--- -- if condition is true, go to stage 3 to finilize the info box
--- 	if (not cond) then
--- 		return false
--- 	end
+-- Stage 2: checking
+-- if condition is true, go to stage 3 to finilize the info box
+	if (not cond) then
+		return false
+	end
 	
--- -- Stage 3: resizng
--- -- Adjust elemet height (ele_adapter) to contain another (ele_resizer)
--- 	self:Sync_H(ele_resizer, ele_adapter, offset)
--- 	self:Show(true)
--- 	return true
--- end
+-- Stage 3: resizng
+-- Adjust elemet height (ele_adapter) to contain another (ele_resizer)
+	self:Sync_H(ele_resizer, ele_adapter, offset)
+	self:Show(true)
+	return true
+end
 
--- function UIItemInfo:Sync_Y(parent, child, offset)
--- 	local pos_c = child:GetWndPos()
--- 	if (not parent) then
--- 		local y = 0 + (offset or 10)
--- 		child:SetWndPos(vector2():set( pos_c.x , y ))
--- 		return y
--- 	end
+function UIItemInfo:Sync_Y(parent, child, offset)
+	local pos_c = child:GetWndPos()
+	if (not parent) then
+		local y = 0 + (offset or 10)
+		child:SetWndPos(vector2():set( pos_c.x , y ))
+		return y
+	end
 	
--- 	local pos_p = parent:GetWndPos()
--- 	local h_p = parent:GetHeight()
--- 	local y = pos_p.y + h_p + (offset or 10)
--- 	child:SetWndPos(vector2():set( pos_c.x , y ))
--- 	return y
--- end
+	local pos_p = parent:GetWndPos()
+	local h_p = parent:GetHeight()
+	local y = pos_p.y + h_p + (offset or 10)
+	child:SetWndPos(vector2():set( pos_c.x , y ))
+	return y
+end
 
--- function UIItemInfo:Sync_H(parent, child, offset)
--- 	local pos_p = parent:GetWndPos()
--- 	local h_p = parent:GetHeight()
--- 	local h = pos_p.y + h_p + offset
--- 	if h < 300 then h = 300 end
--- 	child:SetWndSize(vector2():set( child:GetWidth() , h ))
--- 	return h
--- end
+function UIItemInfo:Sync_H(parent, child, offset)
+	local pos_p = parent:GetWndPos()
+	local h_p = parent:GetHeight()
+	local h = pos_p.y + h_p + offset
+	if h < 300 then h = 300 end
+	child:SetWndSize(vector2():set( child:GetWidth() , h ))
+	return h
+end
 
--- function UIItemInfo:Reset_Y(ele)
--- 	ele:SetWndPos(vector2():set( ele:GetWndPos().x , 0 ))
--- end
+function UIItemInfo:Reset_Y(ele)
+	ele:SetWndPos(vector2():set( ele:GetWndPos().x , 0 ))
+end
 
 function UIItemInfo:Reset()
 	self.id = nil

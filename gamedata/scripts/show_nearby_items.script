@@ -168,8 +168,6 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     self.item_table = {}
     self.ui_table = {}
     self.marker_table = {}
-    -- Item info
-    -- self.item_info = ui_items_info.UIItemInfo(self)
     -- Update timers
     self.update_timer = 0
     self.update_delay = 100
@@ -233,9 +231,8 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Create UI windows if it doesn't exist
       if (self.ui_table[id] == nil) then
         local obj = object_by_id(id)
-        -- self.ui_table[id] = self:GetUIWindow()
         self.ui_table[id] = ui_show_nearby_items_info.UIItemInfo(self) -- ui_items_info.UIItemInfo(self)
-        self.ui_table[id]:Update(obj, obj:section())
+        -- self.ui_table[id]:Update(obj, obj:section())
         self:ApplyScreenRatio(self.ui_table[id].dialog)
         -- self.ui_table[id]:SetStretchTexture(true)
         self.ui_table[id]:Show(false)
@@ -268,6 +265,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
 
           -- Check if player is looking at object
           if(targetObject ~= nil and id == targetObject:id()) then
+            self.ui_table[id]:Update(obj, obj:section())
             self.ui_table[id]:Show(true)
             self.marker_table[id]:Show(false)
 
