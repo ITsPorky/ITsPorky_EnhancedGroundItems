@@ -12,11 +12,10 @@ local isToggled = false
 --Object in players view (at crosshair / center screen)
 local targetObject = nil
 
-local counter = 0
-
 -------------------------------------------------------------------------------------------------------
 -- Utility Functions
 -------------------------------------------------------------------------------------------------------
+
 -- HUD Start
 HUD = nil
 
@@ -161,40 +160,16 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     [clsid.wpn_ammo_s] = true,
   }
 
-  local anomaly_classes = {
-    [clsid.zone]				= true,
-    [clsid.ameba_zone]			= true,
-    [clsid.zone_ameba_s]		= true,
-    [clsid.zone_acid_fog]		= true,
-    [clsid.zone_campfire]		= true,
-    [clsid.zone_dead]			= true,
-    [clsid.zone_rusty_hair]		= true,
-    [clsid.zone_bfuzz]			= true,
-    [clsid.zone_bfuzz_s]		= true,
-    [clsid.zone_mosquito_bald]	= true,
-    [clsid.zone_mbald_s]		= true,
-    [clsid.zone_galantine]		= true,
-    [clsid.zone_galant_s]		= true,
-    [clsid.zone_mincer]			= true,
-    [clsid.zone_mincer_s]		= true,
-  --	[clsid.zone_radioactive]	= true,
-  --	[clsid.zone_radio_s]		= true,
-    [clsid.torrid_zone]			= true,
-    [clsid.zone_torrid_s]		= true,
-    [clsid.nogravity_zone]		= true,
-    [clsid.zone_nograv_s]		= true,
-  }
-
   function ui_show_nearby_items:__init() super()
     self.xml = CScriptXmlInit()
     self.xml:ParseFile("ui_porky_show_nearby_items.xml")
     self.ratio = (1024/768)/(device().width/device().height)
-    -- Item UI Window
-    self.item_info = ui_show_nearby_items_info.UIItemInfo(self)
     -- Tables for storing marker/UI data
     self.item_table = {}
     self.ui_table = {}
     self.marker_table = {}
+    -- Item info
+    -- self.item_info = ui_items_info.UIItemInfo(self)
     -- Update timers
     self.update_timer = 0
     self.update_delay = 100
@@ -258,15 +233,16 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Create UI windows if it doesn't exist
       if (self.ui_table[id] == nil) then
         local obj = object_by_id(id)
-        self.ui_table[id] = self.item_info
-        self.item_info:Update()
-        -- self:ApplyScreenRatio(self.ui_table[id])
+        -- self.ui_table[id] = self:GetUIWindow()
+        self.ui_table[id] = ui_show_nearby_items_info.UIItemInfo(self) -- ui_items_info.UIItemInfo(self)
+        self.ui_table[id]:Update(obj, obj:section())
+        self:ApplyScreenRatio(self.ui_table[id].dialog)
         -- self.ui_table[id]:SetStretchTexture(true)
-        -- self.ui_table[id]:Show(false)
+        self.ui_table[id]:Show(false)
       end
       -- Create Marker UI if it doesn't exist
       if (self.marker_table[id] == nil) then
-        self.marker_table[id] = self.xml:InitStatic(self:GetUIMark(id), self)
+        self.marker_table[id] = self:GetUIMark()
         self:ApplyScreenRatio(self.marker_table[id])
         self.marker_table[id]:SetStretchTexture(true)
         self.marker_table[id]:Show(false)
@@ -283,7 +259,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
         -- Check if screen position is valid
         if (self:ScreenPosValid(vec)) then
           -- Update UI Windows
-          self.ui_table[id]:SetWndPos(vec)
+          self.ui_table[id].dialog:SetWndPos(vec)
           -- Update UI Markers
           self.marker_table[id]:SetWndPos(vec)
           
@@ -342,12 +318,13 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     return item_classes[cls] or false
   end
 
-  function ui_show_nearby_items:GetUIWindow(id)
-    return "porky_item_mini_spot" -- Display item info window
+  function ui_show_nearby_items:GetUIWindow()
+    return
   end
 
-  function ui_show_nearby_items:GetUIMark(id)
-    return "porky_item_spot" -- Display item marker
+  function ui_show_nearby_items:GetUIMark()
+    -- Display item marker
+    return self.xml:InitStatic("porky_item_spot", self)
   end
 
   function ui_show_nearby_items:ScreenPosValid(vec)

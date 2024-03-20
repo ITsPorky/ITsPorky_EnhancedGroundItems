@@ -1,0 +1,115 @@
+-- Icon coloring base on inventory mode and interaction
+local clr_list = {
+	["def"]         = GetARGB(255, 255, 255, 255),
+	["red"]         = GetARGB(255, 255, 50, 50),
+	["green"]       = GetARGB(255, 100, 255, 150),
+	["blue"]        = GetARGB(255, 100, 150, 255),
+	["black"]       = GetARGB(255, 0, 0, 0),
+	
+	["drag"]        = GetARGB(150, 255, 255, 255),
+	["hide"]        = GetARGB(70, 255, 255, 255),
+	["shadow"]      = GetARGB(200, 20, 20, 20),
+	["hide_shadow"] = GetARGB(70, 20, 20, 20),
+	
+	["p1"]          = GetARGB(255, 170, 170, 170),
+	["n1"]          = GetARGB(255, 200, 50, 50),
+	["p2"]          = GetARGB(255, 51, 255, 102),
+	["n2"]          = GetARGB(255, 204, 0, 51),
+	
+	["info_def"]    = GetARGB(200, 255, 255, 255),
+	["info_p"]      = GetARGB(255, 56, 209, 115),
+	["info_n"]      = GetARGB(255, 238, 28, 36),
+	["info_p_txt"]  = GetARGB(200, 100, 255, 100),
+	["info_n_txt"]  = GetARGB(200, 255, 100, 100),
+}
+
+function object_by_id(id)
+	return id and (db.storage[id] and db.storage[id].object or level.object_by_id(id))
+end
+
+-------------------------------------------------------------------
+-- Item info box
+-------------------------------------------------------------------
+
+class "UIItemInfo"
+
+function UIItemInfo:__init(owner, delay)
+	self.xml = CScriptXmlInit()
+	self.xml:ParseFile("ui_porky_show_nearby_items.xml")
+
+	self.owner = owner
+	self.id = nil
+	self.section = nil
+
+	-- Item Info wrapper window
+	self.dialog = self.xml:InitStatic("item_info", self.owner)
+	
+	-- Item info sections
+	self.frame = self.xml:InitFrame("item_info:background_frame", self.dialog)
+	self.name = self.xml:InitTextWnd("item_info:name", self.dialog)
+  self.weight = self.xml:InitTextWnd("item_info:weight", self.dialog)
+	self.desc = self.xml:InitTextWnd("item_info:description", self.dialog)
+
+  self.dialog:Show(false)
+end
+
+function UIItemInfo:Update(obj, sec)	
+	-- no need to process if it's same item
+	if obj then
+		if obj:id() == self.id then
+			self:Show(true)
+			return
+		end
+	elseif sec then
+		if sec == self.section then
+			self:Show(true)
+			return
+		end
+	end
+	
+	-- gather basic info
+	sec = obj and obj:section() or sec
+	local typ = self:GetType(sec)
+	--printf("-updating | section [%s] - type: %s", sec, typ)
+	
+	self.id = obj and obj:id() or nil
+	self.section = sec
+    
+  -- Name
+  local name = obj and ui_item.get_obj_name(obj) or ui_item.get_sec_name(sec)
+  self.name:SetText( name )
+  
+  -- Weight
+  local weight = obj and obj:weight() or ini_sys:r_float_ex(sec,"inv_weight")
+  self.weight:SetText( round_100(weight) .. " " .. game.translate_string("st_kg") )
+  
+  -- Description
+  local desc = obj and ui_item.get_obj_desc(obj) or ui_item.get_sec_desc(sec)
+  self.desc:SetText( desc )
+  self.desc:AdjustHeightToText()
+end
+
+function UIItemInfo:GetType(sec)
+	if ini_sys:r_string_ex(sec, "ammo_class") and (not IsItem("fake_ammo_wpn", sec)) then
+		return "weapon"
+	elseif IsItem("outfit", sec) or IsItem("helmet", sec) then 
+		return "outfit"
+	elseif IsItem("artefact", sec) then
+		return "artefact"
+	elseif IsItem("consumable", sec) then
+		return "booster"
+	elseif IsItem("backpack", sec) then
+		return "backpack"
+	end
+	return "none"
+end
+
+function UIItemInfo:Show(state)
+	-- if state == false then
+	-- 	-- hide all extended info
+	-- 	self.stats_dialog:Show(false)
+	-- 	self.ammo:Show(false)
+	-- end
+	
+	self.dialog:Show(state)
+end
