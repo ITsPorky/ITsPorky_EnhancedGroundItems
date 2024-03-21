@@ -16,6 +16,17 @@ local targetObject = nil
 -- Utility Functions
 -------------------------------------------------------------------------------------------------------
 
+-- Toggle code
+function toggle_show_items()
+  if(isToggled) then
+    isToggled = false
+    news_manager.send_tip(db.actor, "Toggle disabled...")
+  else
+    isToggled = true
+    news_manager.send_tip(db.actor, "Toggle enabled...")
+  end
+end
+
 -- HUD Start
 HUD = nil
 
@@ -41,18 +52,19 @@ end
 
 -- HUD End
 
+-- Utility functions
 function object_by_id(id)
 	return id and (db.storage[id] and db.storage[id].object or level.object_by_id(id))
 end
 
-function toggle_show_items()
-  if(isToggled) then
-    isToggled = false
-    news_manager.send_tip(db.actor, "Toggle disabled...")
-  else
-    isToggled = true
-    news_manager.send_tip(db.actor, "Toggle enabled...")
-  end
+function in_actor_inv(obj)
+	local _parent = obj:parent()
+	return _parent and (_parent:id() == db.actor:id())
+end
+
+function in_npc_inv(npc, obj)
+	local _parent = obj:parent()
+	return _parent and (_parent:id() == npc:id())
 end
 
 -- Class Start
@@ -231,7 +243,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Create UI windows if it doesn't exist
       if (self.ui_table[id] == nil) then
         local obj = object_by_id(id)
-        self.ui_table[id] = ui_show_nearby_items_info.UIItemInfo(self) -- ui_items_info.UIItemInfo(self)
+        self.ui_table[id] = ui_show_nearby_items_info.UIItemInfo(self)
         -- self.ui_table[id]:Update(obj, obj:section())
         self:ApplyScreenRatio(self.ui_table[id].dialog)
         -- self.ui_table[id]:SetStretchTexture(true)
@@ -310,6 +322,10 @@ class "ui_show_nearby_items" (CUIScriptWnd)
   end 
 
   function ui_show_nearby_items:IsItem(obj)
+    local se = alife_object(obj:id())
+    if (se and (se.parent_id ~= 65535)) then
+      return false
+    end
     -- Add conditional logic for if item is held by actor or npc
     -- then item is not valid
     local cls = obj and obj:clsid()

@@ -31,7 +31,7 @@ end
 -- Item info box
 -------------------------------------------------------------------
 
-class "UIItemInfo"
+class "UIItemInfo" (CUIScriptWnd) 
 
 function UIItemInfo:__init(owner, delay)
 	self.owner = owner
@@ -92,6 +92,10 @@ function UIItemInfo:InitControls()
 end
 
 function UIItemInfo:Update(obj, sec)
+	-- Setup XML UI
+	-- self:InitControls()
+
+	-- Start Updating
 	if not self:Pass(obj, sec) then
 		self:Show(false)
 		return
@@ -132,14 +136,6 @@ function UIItemInfo:Update(obj, sec)
 	-- 	self.value:Show(true)
 	-- else
 	-- 	self.value:Show(false)
-	-- end
-	
-	-- -- Note
-	-- if flags and flags.note_str then
-	-- 	self.note:SetText( flags.note_str )
-	-- 	self.note:Show(true)
-	-- else
-	-- 	self.note:Show(false)
 	-- end
 	
 	-- Description
@@ -367,7 +363,7 @@ function UIItemInfo:Pass(obj, sec)
 		end
 	end
 	
-	-- delay
+	-- Delay
 	-- local tg = get_time()
 	-- if (tg < self.timer + self.delay) then
 	-- 	return false
