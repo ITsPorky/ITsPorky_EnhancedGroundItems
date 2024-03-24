@@ -31,7 +31,7 @@ end
 -- Item info box
 -------------------------------------------------------------------
 
-class "UIItemInfo" (CUIScriptWnd) 
+class "UIItemInfo" 
 
 function UIItemInfo:__init(owner, delay)
 	self.owner = owner
@@ -92,10 +92,6 @@ function UIItemInfo:InitControls()
 end
 
 function UIItemInfo:Update(obj, sec)
-	-- Setup XML UI
-	-- self:InitControls()
-
-	-- Start Updating
 	if not self:Pass(obj, sec) then
 		self:Show(false)
 		return
@@ -156,12 +152,12 @@ function UIItemInfo:Update(obj, sec)
 	end
 	
 	-- Comparison
-	local obj_b
-	if self.can_compare and obj then
-		local cls = obj:clsid()
-		local slot = SYS_GetParam(2,sec,"slot",-1) + 1
-		obj_b = slot > 0 and db.actor:item_in_slot(slot)
-	end
+	-- local obj_b
+	-- if self.can_compare and obj then
+	-- 	local cls = obj:clsid()
+	-- 	local slot = SYS_GetParam(2,sec,"slot",-1) + 1
+	-- 	obj_b = slot > 0 and db.actor:item_in_slot(slot)
+	-- end
 	
 	local v = utils_ui.stats_table[typ]
 	local cnt, y = 0, 0
@@ -252,14 +248,14 @@ function UIItemInfo:Update(obj, sec)
 					local sign = gr.sign and valbar_a > 0 and "+" or ""
 
 					-- Comparison item
-					local val_b = obj_b and utils_ui.get_stats_value(obj_b, obj_b:section(), gr, stat)
-					local valbar_b = val_b and val_b * gr.magnitude
-					if valbar_b and (valbar_a ~= valbar_b) then
-						local diff_val = math.ceil(valbar_a - valbar_b)
-						ele.comp:SetText( "(" .. (diff_val > 0 and "+" or "") .. diff_val .. ")" )
-						ele.comp:Show(true)
-						clr = (valbar_a > valbar_b) and clr_list["info_p_txt"] or clr_list["info_n_txt"]
-					end
+					-- local val_b = obj_b and utils_ui.get_stats_value(obj_b, obj_b:section(), gr, stat)
+					-- local valbar_b = val_b and val_b * gr.magnitude
+					-- if valbar_b and (valbar_a ~= valbar_b) then
+					-- 	local diff_val = math.ceil(valbar_a - valbar_b)
+					-- 	ele.comp:SetText( "(" .. (diff_val > 0 and "+" or "") .. diff_val .. ")" )
+					-- 	ele.comp:Show(true)
+					-- 	clr = (valbar_a > valbar_b) and clr_list["info_p_txt"] or clr_list["info_n_txt"]
+					-- end
 					
 					if gr.sign_inverse_txt then
 						if valbar_a > 0 then

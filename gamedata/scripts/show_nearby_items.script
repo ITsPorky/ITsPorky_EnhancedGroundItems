@@ -180,16 +180,18 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     self.item_table = {}
     self.ui_table = {}
     self.marker_table = {}
+    -- -- Item Info Window
+    -- self.item_info = ui_show_nearby_items_info.UIItemInfo(self)
     -- Update timers
     self.update_timer = 0
     self.update_delay = 100
   end
 
   function ui_show_nearby_items:__finalize()
-    for id,_ in pairs(self.ui_table) do
-      self.ui_table[id]:Show(false)
-      self.ui_table[id] = nil
-    end
+    -- for id,_ in pairs(self.ui_table) do
+    --   self.ui_table[id]:Show(false)
+    --   self.ui_table[id] = nil
+    -- end
     -- remove if doesnt work
     for id,_ in pairs(self.marker_table) do
       self.marker_table[id]:Show(false)
@@ -243,11 +245,13 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Create UI windows if it doesn't exist
       if (self.ui_table[id] == nil) then
         local obj = object_by_id(id)
-        self.ui_table[id] = ui_show_nearby_items_info.UIItemInfo(self)
-        -- self.ui_table[id]:Update(obj, obj:section())
-        self:ApplyScreenRatio(self.ui_table[id].dialog)
+        local item_info = ui_show_nearby_items_info.UIItemInfo(self)
+        item_info:Update(obj, obj:section())
+        self:ApplyScreenRatio(item_info.dialog)
+        self.ui_table[id] = item_info.dialog
         -- self.ui_table[id]:SetStretchTexture(true)
         self.ui_table[id]:Show(false)
+        -- self.item_info:Show(false)
       end
       -- Create Marker UI if it doesn't exist
       if (self.marker_table[id] == nil) then
@@ -262,35 +266,44 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Update markers.
       if (self.item_table[id]) then
         local obj = object_by_id(id)
-        local pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
-        local vec = pos and game.world2ui(pos, false, false)
+        -- UI position
+        local ui_pos = obj and vector():set(obj:position()):add(vector():set(0,1,0))
+        local ui_vec = ui_pos and game.world2ui(ui_pos, false, false)
+        -- Marker position
+        local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0.3,0))
+        local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
 
         -- Check if screen position is valid
-        if (self:ScreenPosValid(vec)) then
+        if (self:ScreenPosValid(marker_vec)) then
           -- Update UI Windows
-          self.ui_table[id].dialog:SetWndPos(vec)
+          self.ui_table[id]:SetWndPos(ui_vec)
+          -- self.item_info.dialog:SetWndPos(ui_vec)
           -- Update UI Markers
-          self.marker_table[id]:SetWndPos(vec)
+          self.marker_table[id]:SetWndPos(marker_vec)
           
           --Object in players view (at crosshair / center screen)
           local targetObject = level.get_target_obj() or nil
 
           -- Check if player is looking at object
           if(targetObject ~= nil and id == targetObject:id()) then
-            self.ui_table[id]:Update(obj, obj:section())
+            -- self.ui_table[id]:Update(obj, obj:section())
             self.ui_table[id]:Show(true)
+            -- self.item_info:Update(obj, obj:section())
+            -- self.item_info.dialog:Show(true)
             self.marker_table[id]:Show(false)
-
           else
             self.marker_table[id]:Show(true)
             self.ui_table[id]:Show(false)
+            -- self.item_info.dialog:Show(false)
           end
         else
+          -- self.item_info.dialog:Show(false)
           self.ui_table[id]:Show(false)
           self.marker_table[id]:Show(false)
         end
       else
         -- Remove markers.
+        -- self.item_info.dialog:Show(false)
         self.ui_table[id]:Show(false)
         self.ui_table[id] = nil
         self.marker_table[id]:Show(false)
@@ -322,6 +335,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
   end 
 
   function ui_show_nearby_items:IsItem(obj)
+    -- Removes items in hands and npc hands from being displayed
     local se = alife_object(obj:id())
     if (se and (se.parent_id ~= 65535)) then
       return false

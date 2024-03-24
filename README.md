@@ -55,6 +55,17 @@ The MCM Tab for this addon is "SNI - Show Nearby Items"
   - Shift key
   - Alt key
 
+### Features
+
+Ground Item Information Windows - Information windows show when the player looks at a ground item in range.
+![Item information UI Window](/images/stalker-UI-Info-Window.gif)
+
+Ground Item Markers - These markers mark items on the ground that can be picked up.
+![Item Markers](/images/stalker-markers.gif)
+Markers will also dissapear after the item has been picked up.
+![Item Markers Removal](/images/stalker-pickup.gif)
+
+
 ## Authors Note: Hope you find this addon useful!
 
 Hope you enjoy using the addon! I know I wanted this feature and wanted to make it easily customisable for the player in game, thats why I made this addon. Plus I just like making mods to test my skills and improve - _ITsPorky_
