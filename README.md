@@ -68,4 +68,4 @@ Markers will also dissapear after the item has been picked up.
 
 ## Authors Note: Hope you find this addon useful!
 
-Hope you enjoy using the addon! I know I wanted this feature and wanted to make it easily customisable for the player in game, thats why I made this addon. Plus I just like making mods to test my skills and improve - _ITsPorky_
+Hope you enjoy using the addon! I built it for a bit of fun and to further learn how to mod the game. Plus I just like making mods to test my skills and improving - _ITsPorky_
