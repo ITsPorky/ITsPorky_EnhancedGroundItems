@@ -62,6 +62,7 @@ Ground Item Information Windows - Information windows show when the player looks
 
 Ground Item Markers - These markers mark items on the ground that can be picked up.
 ![Item Markers](/images/stalker-markers.gif)
+
 Markers will also dissapear after the item has been picked up.
 ![Item Markers Removal](/images/stalker-pickup.gif)
 
