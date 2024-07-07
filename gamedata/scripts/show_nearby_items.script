@@ -347,7 +347,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
   end
 
   function ui_show_nearby_items:GetUIWindow()
-    return
+    return self.xml:InitStatic("editied_item_info", self)
   end
 
   function ui_show_nearby_items:GetUIMark()
