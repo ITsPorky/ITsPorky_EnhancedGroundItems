@@ -42,7 +42,7 @@ function on_mcm_load()
             {
                 id = "showNearbyItemsDetectionDistance",
                 type = "track",
-                val = 2,
+                val = 6,
                 min = 1,
                 max = 50,
                 step = 1,

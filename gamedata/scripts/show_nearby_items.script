@@ -76,7 +76,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     [clsid.obj_antirad] = true,
     [clsid.obj_attachable] = true,
     [clsid.obj_bandage] = true,
-    [clsid.obj_bolt] = true,
+    -- [clsid.obj_bolt] = true,
     [clsid.obj_bottle] = true,
     [clsid.obj_document] = true,
     [clsid.obj_explosive] = true,
@@ -178,21 +178,12 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     self.ratio = (1024/768)/(device().width/device().height)
     -- Tables for storing marker/UI data
     self.item_table = {}
-    self.ui_table = {}
     self.marker_table = {}
-    -- -- Item Info Window
-    -- self.item_info = ui_show_nearby_items_info.UIItemInfo(self)
-    -- Update timers
     self.update_timer = 0
     self.update_delay = 100
   end
 
   function ui_show_nearby_items:__finalize()
-    -- for id,_ in pairs(self.ui_table) do
-    --   self.ui_table[id]:Show(false)
-    --   self.ui_table[id] = nil
-    -- end
-    -- remove if doesnt work
     for id,_ in pairs(self.marker_table) do
       self.marker_table[id]:Show(false)
       self.marker_table[id] = nil
@@ -242,70 +233,36 @@ class "ui_show_nearby_items" (CUIScriptWnd)
 
   function ui_show_nearby_items:UpdateUI()
     for id,_ in pairs(self.item_table) do
-      -- Create UI windows if it doesn't exist
-      if (self.ui_table[id] == nil) then
-        local obj = object_by_id(id)
-        local item_info = ui_show_nearby_items_info.UIItemInfo(self)
-        item_info:Update(obj, obj:section())
-        self:ApplyScreenRatio(item_info.dialog)
-        self.ui_table[id] = item_info.dialog
-        -- self.ui_table[id]:SetStretchTexture(true)
-        self.ui_table[id]:Show(false)
-        -- self.item_info:Show(false)
-      end
+      local obj = object_by_id(id)
       -- Create Marker UI if it doesn't exist
       if (self.marker_table[id] == nil) then
-        self.marker_table[id] = self:GetUIMark()
+        self.marker_table[id] = self:GetUIItemName()
+        local name = obj and ui_item.get_obj_name(obj)
+        self.marker_table[id]:SetText(name)
         self:ApplyScreenRatio(self.marker_table[id])
-        self.marker_table[id]:SetStretchTexture(true)
         self.marker_table[id]:Show(false)
       end
     end
 
-    for id,_ in pairs(self.ui_table) do
+    for id,_ in pairs(self.marker_table) do
       -- Update markers.
       if (self.item_table[id]) then
         local obj = object_by_id(id)
-        -- UI position
-        local ui_pos = obj and vector():set(obj:position()):add(vector():set(0,1,0))
-        local ui_vec = ui_pos and game.world2ui(ui_pos, false, false)
         -- Marker position
-        local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0.3,0))
+        -- local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
+        local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
         local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
 
         -- Check if screen position is valid
         if (self:ScreenPosValid(marker_vec)) then
-          -- Update UI Windows
-          self.ui_table[id]:SetWndPos(ui_vec)
-          -- self.item_info.dialog:SetWndPos(ui_vec)
           -- Update UI Markers
           self.marker_table[id]:SetWndPos(marker_vec)
-          
-          --Object in players view (at crosshair / center screen)
-          local targetObject = level.get_target_obj() or nil
-
-          -- Check if player is looking at object
-          if(targetObject ~= nil and id == targetObject:id()) then
-            -- self.ui_table[id]:Update(obj, obj:section())
-            self.ui_table[id]:Show(true)
-            -- self.item_info:Update(obj, obj:section())
-            -- self.item_info.dialog:Show(true)
-            self.marker_table[id]:Show(false)
-          else
-            self.marker_table[id]:Show(true)
-            self.ui_table[id]:Show(false)
-            -- self.item_info.dialog:Show(false)
-          end
+          self.marker_table[id]:Show(true)
         else
-          -- self.item_info.dialog:Show(false)
-          self.ui_table[id]:Show(false)
           self.marker_table[id]:Show(false)
         end
       else
         -- Remove markers.
-        -- self.item_info.dialog:Show(false)
-        self.ui_table[id]:Show(false)
-        self.ui_table[id] = nil
         self.marker_table[id]:Show(false)
         self.marker_table[id] = nil
       end
@@ -321,10 +278,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     if not (self:IsItem(obj)) then
       return false
     end
-    -- Check if is held by player or NPC
-    -- if(obj:is_inventory_item()) then 
 
-    -- end
     -- Check if item is in detection range
     if(obj:position():distance_to_sqr(pos) < math.pow(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_DETECTION_DISTANCE, 2)) then
       if(isToggled and show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED) then
@@ -353,6 +307,11 @@ class "ui_show_nearby_items" (CUIScriptWnd)
   function ui_show_nearby_items:GetUIMark()
     -- Display item marker
     return self.xml:InitStatic("porky_item_spot", self)
+  end
+
+  function ui_show_nearby_items:GetUIItemName()
+    -- Display item name
+    return self.xml:InitTextWnd("porky_item_name", self)
   end
 
   function ui_show_nearby_items:ScreenPosValid(vec)
