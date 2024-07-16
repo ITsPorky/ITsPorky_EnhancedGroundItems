@@ -1,6 +1,6 @@
 --
 -- ShowNearbyItems v0.0.1
--- Last modified: 12.10.2024 (dd.mm.yyyy)
+-- Last modified: 16.07.2024 (dd.mm.yyyy)
 -- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
 --
 
@@ -9,6 +9,8 @@
 -------------------------------------------------------------------------------------------------------
 
 SHOW_NEARBY_ITEMS_ENABLED = true
+-- SHOW_NEARBY_ITEM_MARKERS_ENABLED = true
+-- SHOW_NEARBY_ITEM_WINDOWS_ENABLED = true
 SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = 15
 SHOW_NEARBY_ITEMS_KEY = DIK_keys.DIK_F
 SHOW_NEARBY_ITEMS_MODE = 0
@@ -40,9 +42,21 @@ function on_mcm_load()
                 def = SHOW_NEARBY_ITEMS_ENABLED
             },
             {
+                id = "showNearbyItemMarkersEnabled", 
+                type = "check", 
+                val = 1, 
+                def = SHOW_NEARBY_ITEM_MARKERS_ENABLED
+            },
+            {
+                id = "showNearbyItemWindowsEnabled", 
+                type = "check", 
+                val = 1, 
+                def = SHOW_NEARBY_ITEM_WINDOWS_ENABLED
+            },
+            {
                 id = "showNearbyItemsDetectionDistance",
                 type = "track",
-                val = 6,
+                val = 2,
                 min = 1,
                 max = 50,
                 step = 1,
@@ -91,6 +105,11 @@ end
 function on_option_change(mcm)
     if mcm then
         SHOW_NEARBY_ITEMS_ENABLED = ui_mcm.get("porky_show_nearby_items/showNearbyItemsEnabled")
+        -- Markers options
+        SHOW_NEARBY_ITEM_MARKERS_ENABLED = ui_mcm.get("proky_show_nearby_items/showNearbyItemMarkersEnabled")
+        -- UI window options
+        SHOW_NEARBY_ITEM_WINDOWS_ENABLED = ui_mcm.get("proky_show_nearby_items/showNearbyItemWindowsEnabled")
+        -- Extra/Toggle Options
         SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsDetectionDistance")
         SHOW_NEARBY_ITEMS_KEY = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKey") or SHOW_NEARBY_ITEMS_KEY
         SHOW_NEARBY_ITEMS_MODE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKeyMode")
