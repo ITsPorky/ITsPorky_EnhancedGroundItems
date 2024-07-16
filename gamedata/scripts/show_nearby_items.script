@@ -179,11 +179,16 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     -- Tables for storing marker/UI data
     self.item_table = {}
     self.marker_table = {}
+    self.ui_table = {}
     self.update_timer = 0
     self.update_delay = 100
   end
 
   function ui_show_nearby_items:__finalize()
+    for id,_ in pairs(self.ui_table) do
+      self.ui_table[id]:Show(false)
+      self.ui_table[id] = nil
+    end
     for id,_ in pairs(self.marker_table) do
       self.marker_table[id]:Show(false)
       self.marker_table[id] = nil
@@ -234,6 +239,14 @@ class "ui_show_nearby_items" (CUIScriptWnd)
   function ui_show_nearby_items:UpdateUI()
     for id,_ in pairs(self.item_table) do
       local obj = object_by_id(id)
+      -- Create UI windows if it doesn't exist
+      if (self.ui_table[id] == nil) then
+        local item_info = ui_show_nearby_items_info.UIItemInfo(self)
+        item_info:Update(obj, obj:section())
+        self:ApplyScreenRatio(item_info.dialog)
+        self.ui_table[id] = item_info.dialog
+        self.ui_table[id]:Show(false)
+      end
       -- Create Marker UI if it doesn't exist
       if (self.marker_table[id] == nil) then
         self.marker_table[id] = self:GetUIItemName()
@@ -248,8 +261,21 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Update markers.
       if (self.item_table[id]) then
         local obj = object_by_id(id)
+        -- UI position
+        local ui_vec = vector(0, 0)
+
+        --Object in players view (at crosshair / center screen)
+        local targetObject = level.get_target_obj() or nil
+        -- Check if screen position is valid
+        if (targetObject ~= nil and id == targetObject:id() and targetObject:position():distance_to_sqr(db.actor:position()) < math.pow(5,2)) then
+          -- Update UI Markers
+          self.ui_table[id]:SetWndPos(ui_vec)
+          self.ui_table[id]:Show(true)
+        else
+          self.ui_table[id]:Show(false)
+        end
+
         -- Marker position
-        -- local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
         local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
         local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
 
