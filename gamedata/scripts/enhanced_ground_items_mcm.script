@@ -1,6 +1,6 @@
 --
 -- ShowNearbyItems v0.0.1
--- Last modified: 16.07.2024 (dd.mm.yyyy)
+-- Last modified: 18.07.2024 (dd.mm.yyyy)
 -- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
 --
 
@@ -8,13 +8,13 @@
 -- Variables
 -------------------------------------------------------------------------------------------------------
 
-SHOW_NEARBY_ITEMS_ENABLED = true
--- SHOW_NEARBY_ITEM_MARKERS_ENABLED = true
--- SHOW_NEARBY_ITEM_WINDOWS_ENABLED = true
-SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = 15
-SHOW_NEARBY_ITEMS_KEY = DIK_keys.DIK_F
-SHOW_NEARBY_ITEMS_MODE = 0
-SHOW_NEARBY_ITEMS_MODIFIER = 3
+EGI_ENABLED = true
+EGI_MARKERS_ENABLED = true
+EGI_WINDOWS_ENABLED = true
+EGI_DETECTION_DISTANCE = 6
+EGI_KEY = DIK_keys.DIK_F
+EGI_MODE = 0
+EGI_MODIFIER = 3
 
 MCM_KEYBINDS = ui_mcm and ui_mcm.key_hold
 
@@ -24,55 +24,55 @@ MCM_KEYBINDS = ui_mcm and ui_mcm.key_hold
 
 function on_mcm_load()
 	op = { 
-    id = "porky_show_nearby_items",
+    id = "porky_enhanced_ground_items",
     sh = true,
     gr = {
 			{
-                id = "showNearbyItemsTitle", 
+                id = "enhancedGroundItemsTitle", 
                 type = "slide", 
                 link = "ui_options_slider_player", 
-                text = "Porkys - Show Nearby Items", 
+                text = "Porkys - Enhanced Ground items", 
                 size = {512,50}, 
                 spacing = 20
             },
 			{
-                id = "showNearbyItemsEnabled", 
+                id = "enhancedGroundItemsEnabled", 
                 type = "check", 
                 val = 1, 
-                def = SHOW_NEARBY_ITEMS_ENABLED
+                def = EGI_ENABLED
             },
             {
-                id = "showNearbyItemMarkersEnabled", 
+                id = "enhancedGroundItemsMarkersEnabled", 
                 type = "check", 
                 val = 1, 
-                def = SHOW_NEARBY_ITEM_MARKERS_ENABLED
+                def = EGI_MARKERS_ENABLED
             },
             {
-                id = "showNearbyItemWindowsEnabled", 
+                id = "enhancedGroundItemsWindowsEnabled", 
                 type = "check", 
                 val = 1, 
-                def = SHOW_NEARBY_ITEM_WINDOWS_ENABLED
+                def = EGI_WINDOWS_ENABLED
             },
             {
-                id = "showNearbyItemsDetectionDistance",
+                id = "enhancedGroundItemsDetectionDistance",
                 type = "track",
                 val = 2,
                 min = 1,
                 max = 50,
                 step = 1,
-                def = SHOW_NEARBY_ITEMS_DETECTION_DISTANCE
+                def = EGI_DETECTION_DISTANCE
             },
 			{
-                id = "showNearbyItemsKey", 
+                id = "enhancedGroundItemsKey", 
                 type = "key_bind", 
                 val = 2, 
-                def = SHOW_NEARBY_ITEMS_KEY
+                def = EGI_KEY
             },
 	        {
-                id = "showNearbyItemsKeyModifier", 
+                id = "enhancedGroundItemsKeyModifier", 
                 type = ui_mcm.kb_mod_radio, 
                 val = 2, 
-                def = SHOW_NEARBY_ITEMS_MODIFIER, 
+                def = EGI_MODIFIER, 
                 hint = "mcm_kb_modifier", 
                 content= { 
                     {0, "mcm_kb_mod_none"}, 
@@ -82,10 +82,10 @@ function on_mcm_load()
                 }
             },
 			{
-                id = "showNearbyItemsKeyMode", 
+                id = "enhancedGroundItemsKeyMode", 
                 type = ui_mcm.kb_mod_radio, 
                 val = 2, 
-                def = SHOW_NEARBY_ITEMS_MODE, 
+                def = EGI_MODE, 
                 hint = "mcm_kb_mode", 
                 content= { 
                     {0, "mcm_kb_mode_press"}, 
@@ -104,16 +104,16 @@ end
 
 function on_option_change(mcm)
     if mcm then
-        SHOW_NEARBY_ITEMS_ENABLED = ui_mcm.get("porky_show_nearby_items/showNearbyItemsEnabled")
+        EGI_ENABLED = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsEnabled")
         -- Markers options
-        SHOW_NEARBY_ITEM_MARKERS_ENABLED = ui_mcm.get("proky_show_nearby_items/showNearbyItemMarkersEnabled")
+        EGI_MARKERS_ENABLED = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsMarkersEnabled")
         -- UI window options
-        SHOW_NEARBY_ITEM_WINDOWS_ENABLED = ui_mcm.get("proky_show_nearby_items/showNearbyItemWindowsEnabled")
+        EGI_WINDOWS_ENABLED = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsWindowsEnabled")
         -- Extra/Toggle Options
-        SHOW_NEARBY_ITEMS_DETECTION_DISTANCE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsDetectionDistance")
-        SHOW_NEARBY_ITEMS_KEY = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKey") or SHOW_NEARBY_ITEMS_KEY
-        SHOW_NEARBY_ITEMS_MODE = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKeyMode")
-        SHOW_NEARBY_ITEMS_MODIFIER = ui_mcm.get("porky_show_nearby_items/showNearbyItemsKeyModifier")
+        EGI_DETECTION_DISTANCE = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsDetectionDistance")
+        EGI_KEY = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsKey") or SHOW_NEARBY_ITEMS_KEY
+        EGI_MODE = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsKeyMode")
+        EGI_MODIFIER = ui_mcm.get("porky_enhanced_ground_items/enhancedGroundItemsKeyModifier")
     end
   end
   

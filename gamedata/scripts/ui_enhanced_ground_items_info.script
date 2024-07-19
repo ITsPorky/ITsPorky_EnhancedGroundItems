@@ -52,7 +52,7 @@ end
 function UIItemInfo:InitControls()
 
 	self.xml = CScriptXmlInit()
-	self.xml:ParseFile("ui_porky_show_nearby_items.xml")
+	self.xml:ParseFile("ui_enhanced_ground_items.xml")
 
 	self.dialog = self.xml:InitStatic("item_info", self.owner)
 	
@@ -127,12 +127,12 @@ function UIItemInfo:Update(obj, sec)
 	self.weight:SetText( round_100(weight) .. " " .. game.translate_string("st_kg") )
 	
 	-- -- Cost
-	-- if flags and flags.value_str and (not flags.note_str) then
-	-- 	self.value:SetText( flags.value_str )
-	-- 	self.value:Show(true)
-	-- else
-	-- 	self.value:Show(false)
-	-- end
+	if flags and flags.value_str and (not flags.note_str) then
+		self.value:SetText( flags.value_str )
+		self.value:Show(true)
+	else
+		self.value:Show(false)
+	end
 	
 	-- Description
 	local desc = obj and ui_item.get_obj_desc(obj) or ui_item.get_sec_desc(sec)
@@ -150,14 +150,6 @@ function UIItemInfo:Update(obj, sec)
 	for i=1,#self.stats do
 		self.stats[i].base:Show(false)
 	end
-	
-	-- Comparison
-	-- local obj_b
-	-- if self.can_compare and obj then
-	-- 	local cls = obj:clsid()
-	-- 	local slot = SYS_GetParam(2,sec,"slot",-1) + 1
-	-- 	obj_b = slot > 0 and db.actor:item_in_slot(slot)
-	-- end
 	
 	local v = utils_ui.stats_table[typ]
 	local cnt, y = 0, 0
@@ -243,19 +235,8 @@ function UIItemInfo:Update(obj, sec)
 					
 					if gr.sign_inverse then
 						clr = valbar_a < 0 and clr_list["p1"] or clr_list["n1"]
-						--valbar_a = -1 * valbar_a -- invert sign again if needed
 					end
 					local sign = gr.sign and valbar_a > 0 and "+" or ""
-
-					-- Comparison item
-					-- local val_b = obj_b and utils_ui.get_stats_value(obj_b, obj_b:section(), gr, stat)
-					-- local valbar_b = val_b and val_b * gr.magnitude
-					-- if valbar_b and (valbar_a ~= valbar_b) then
-					-- 	local diff_val = math.ceil(valbar_a - valbar_b)
-					-- 	ele.comp:SetText( "(" .. (diff_val > 0 and "+" or "") .. diff_val .. ")" )
-					-- 	ele.comp:Show(true)
-					-- 	clr = (valbar_a > valbar_b) and clr_list["info_p_txt"] or clr_list["info_n_txt"]
-					-- end
 					
 					if gr.sign_inverse_txt then
 						if valbar_a > 0 then
@@ -272,9 +253,7 @@ function UIItemInfo:Update(obj, sec)
 				end
 				
 				
-				y = y + ele.base:GetHeight()
-				--printf("stat ele [%s] [%s] | cnt: %s - y: %s - value: %s", sec, stat, cnt, y, val_a)
-				
+				y = y + ele.base:GetHeight()				
 				local ele_prev = cnt_last and self.stats[cnt_last]
 				self:Sync_Y(ele_prev and ele_prev.base, ele.base, 0)
 				cnt_last = cnt
@@ -358,14 +337,6 @@ function UIItemInfo:Pass(obj, sec)
 			end
 		end
 	end
-	
-	-- Delay
-	-- local tg = get_time()
-	-- if (tg < self.timer + self.delay) then
-	-- 	return false
-	-- end
-	
-	-- self.timer = tg
 	
 	return true
 end

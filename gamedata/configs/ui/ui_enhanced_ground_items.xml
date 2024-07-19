@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <w>
-	<porky_item_spot x="0" y="0" width="10" height="10" stretch="1">
+	<egi_item_spot x="0" y="0" width="10" height="10" stretch="1">
 		<texture r="255" g="255" b="255">ui_pda2_squad_leader</texture>
-	</porky_item_spot>
+	</egi_item_spot>
 
-	<porky_item_name x="0" y="0" stretch="1" complex_desc="0">
+	<egi_item_name x="0" y="0" stretch="1" complex_desc="0">
 		<text font="letterica16" color="ui_gray_3" complex_mode="0" align="c" vert_align="c"/>
-	</porky_item_name>
+	</egi_item_name>
 
-	<!-- Porkys Item info -->
+	<!-- EGI Item info -->
 	<item_info x="0" y="0" width="243" height="85" stretch="1">
 		<background_frame x="0" y="0" width="243" height="85" stretch="1">
 			<texture>ui_inGame2_hint_wnd_main_window</texture>

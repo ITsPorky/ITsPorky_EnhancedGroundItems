@@ -1,6 +1,6 @@
 --
--- ShowNearbyItems v0.0.1
--- Last modified: 15.03.2024 (dd.mm.yyyy)
+-- ITsPorkys - Enhanced Ground Items (EGI) v1.0
+-- Last modified: 18.07.2024 (dd.mm.yyyy)
 -- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
 --
 
@@ -20,10 +20,10 @@ local targetObject = nil
 function toggle_show_items()
   if(isToggled) then
     isToggled = false
-    news_manager.send_tip(db.actor, "Toggle disabled...")
+    news_manager.send_tip(db.actor, "[EGI - Enhanced Ground Items] Toggle disabled...")
   else
     isToggled = true
-    news_manager.send_tip(db.actor, "Toggle enabled...")
+    news_manager.send_tip(db.actor, "[EGI - Enhanced Ground Items] Toggle enabled...")
   end
 end
 
@@ -32,7 +32,7 @@ HUD = nil
 
 function hud_active()
 	if (HUD == nil) then
-		HUD = ui_show_nearby_items()
+		HUD = ui_enhanced_ground_items()
 		get_hud():AddDialogToRender(HUD)
 	end
 end
@@ -68,7 +68,7 @@ function in_npc_inv(npc, obj)
 end
 
 -- Class Start
-class "ui_show_nearby_items" (CUIScriptWnd) 
+class "ui_enhanced_ground_items" (CUIScriptWnd) 
 
   local item_classes = {
     -- Objects
@@ -172,9 +172,9 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     [clsid.wpn_ammo_s] = true,
   }
 
-  function ui_show_nearby_items:__init() super()
+  function ui_enhanced_ground_items:__init() super()
     self.xml = CScriptXmlInit()
-    self.xml:ParseFile("ui_porky_show_nearby_items.xml")
+    self.xml:ParseFile("ui_enhanced_ground_items.xml")
     self.ratio = (1024/768)/(device().width/device().height)
     -- Tables for storing marker/UI data
     self.item_table = {}
@@ -184,7 +184,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     self.update_delay = 100
   end
 
-  function ui_show_nearby_items:__finalize()
+  function ui_enhanced_ground_items:__finalize()
     for id,_ in pairs(self.ui_table) do
       self.ui_table[id]:Show(false)
       self.ui_table[id] = nil
@@ -195,13 +195,13 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     end
   end
 
-  function ui_show_nearby_items:Update()
+  function ui_enhanced_ground_items:Update()
     CUIScriptWnd.Update(self)
     self:UpdateObject()
     self:UpdateUI()
   end
 
-  function ui_show_nearby_items:UpdateObject()
+  function ui_enhanced_ground_items:UpdateObject()
     if(self.update_timer > time_global()) then
       -- Not ready for update yet, continue
       return
@@ -212,7 +212,7 @@ class "ui_show_nearby_items" (CUIScriptWnd)
 
     -- Do block to contain scoping of self.show_item
     do
-      self.show_item = show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED and main_hud_shown() or false
+      self.show_item = enhanced_ground_items_mcm.EGI_ENABLED and main_hud_shown() or false
     end
 
     -- Actor position
@@ -236,24 +236,32 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     end
   end
 
-  function ui_show_nearby_items:UpdateUI()
+  function ui_enhanced_ground_items:UpdateUI()
     for id,_ in pairs(self.item_table) do
       local obj = object_by_id(id)
-      -- Create UI windows if it doesn't exist
-      if (self.ui_table[id] == nil) then
-        local item_info = ui_show_nearby_items_info.UIItemInfo(self)
-        item_info:Update(obj, obj:section())
-        self:ApplyScreenRatio(item_info.dialog)
-        self.ui_table[id] = item_info.dialog
-        self.ui_table[id]:Show(false)
+
+      -- Check UI Windows are enabled
+      if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
+        -- Create UI windows if it doesn't exist
+        if (self.ui_table[id] == nil) then
+          local item_info = ui_enhanced_ground_items_info.UIItemInfo(self)
+          item_info:Update(obj, obj:section())
+          self:ApplyScreenRatio(item_info.dialog)
+          self.ui_table[id] = item_info.dialog
+          self.ui_table[id]:Show(false)
+        end
       end
-      -- Create Marker UI if it doesn't exist
-      if (self.marker_table[id] == nil) then
-        self.marker_table[id] = self:GetUIItemName()
-        local name = obj and ui_item.get_obj_name(obj)
-        self.marker_table[id]:SetText(name)
-        self:ApplyScreenRatio(self.marker_table[id])
-        self.marker_table[id]:Show(false)
+
+      -- Check Markers are enabled
+      if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
+        -- Create Marker UI if it doesn't exist
+        if (self.marker_table[id] == nil) then
+          self.marker_table[id] = self:GetUIItemName()
+          local name = obj and ui_item.get_obj_name(obj)
+          self.marker_table[id]:SetText(name)
+          self:ApplyScreenRatio(self.marker_table[id])
+          self.marker_table[id]:Show(false)
+        end
       end
     end
 
@@ -261,41 +269,56 @@ class "ui_show_nearby_items" (CUIScriptWnd)
       -- Update markers.
       if (self.item_table[id]) then
         local obj = object_by_id(id)
-        -- UI position
-        local ui_vec = vector(20, 20)
 
-        --Object in players view (at crosshair / center screen)
-        local targetObject = level.get_target_obj() or nil
-        -- Check if screen position is valid
-        if (targetObject ~= nil and id == targetObject:id() and targetObject:position():distance_to_sqr(db.actor:position()) < math.pow(5,2) and show_nearby_items_mcm.SHOW_NEARBY_ITEM_WINDOWS_ENABLED) then
-          -- Update UI Markers
-          self.ui_table[id]:SetWndPos(ui_vec)
-          self.ui_table[id]:Show(true)
-        else
+        -- Check UI Windows are enabled
+        if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
+          -- UI position
+          local ui_vec = vector(20, 20)
+          --Object in players view (at crosshair / center screen)
+          local targetObject = level.get_target_obj() or nil
+          -- Check if screen position is valid
+          if (targetObject ~= nil and id == targetObject:id() and targetObject:position():distance_to_sqr(db.actor:position()) < math.pow(5,2)) then
+            -- Update UI Markers
+            self.ui_table[id]:SetWndPos(ui_vec)
+            self.ui_table[id]:Show(true)
+          else
+            self.ui_table[id]:Show(false)
+          end
+        end
+
+        -- Check Markers are enabled
+        if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
+          -- Marker position
+          local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
+          local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
+          -- Check if screen position is valid
+          if (self:ScreenPosValid(marker_vec)) then
+            -- Update UI Markers
+            self.marker_table[id]:SetWndPos(marker_vec)
+            self.marker_table[id]:Show(true)
+          else
+            self.marker_table[id]:Show(false)
+          end
+        end
+      else
+        -- Check UI Windows are enabled
+        if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
           self.ui_table[id]:Show(false)
         end
 
-        -- Marker position
-        local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
-        local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
-
-        -- Check if screen position is valid
-        if (self:ScreenPosValid(marker_vec) and show_nearby_items_mcm.SHOW_NEARBY_ITEM_MARKERS_ENABLED) then
-          -- Update UI Markers
-          self.marker_table[id]:SetWndPos(marker_vec)
-          self.marker_table[id]:Show(true)
-        else
+        -- Check Markers are enabled
+        if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
           self.marker_table[id]:Show(false)
         end
-      else
-        -- Remove markers.
-        self.marker_table[id]:Show(false)
+
+        -- Remove markers and windows
+        self.ui_table[id] = nil
         self.marker_table[id] = nil
       end
     end
   end
 
-  function ui_show_nearby_items:ValidateItem(obj, pos)
+  function ui_enhanced_ground_items:ValidateItem(obj, pos)
     -- Check if item is shown
     if not (self.show_item) then
       return false
@@ -306,15 +329,15 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     end
 
     -- Check if item is in detection range
-    if(obj:position():distance_to_sqr(pos) < math.pow(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_DETECTION_DISTANCE, 2)) then
-      if(isToggled and show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED) then
+    if(obj:position():distance_to_sqr(pos) < math.pow(enhanced_ground_items_mcm.EGI_DETECTION_DISTANCE, 2)) then
+      if(isToggled and enhanced_ground_items_mcm.EGI_ENABLED) then
         return true
       end
     end
     return false
   end 
 
-  function ui_show_nearby_items:IsItem(obj)
+  function ui_enhanced_ground_items:IsItem(obj)
     -- Removes items in hands and npc hands from being displayed
     local se = alife_object(obj:id())
     if (se and (se.parent_id ~= 65535)) then
@@ -326,25 +349,21 @@ class "ui_show_nearby_items" (CUIScriptWnd)
     return item_classes[cls] or false
   end
 
-  function ui_show_nearby_items:GetUIWindow()
-    return self.xml:InitStatic("editied_item_info", self)
-  end
-
-  function ui_show_nearby_items:GetUIMark()
+  function ui_enhanced_ground_items:GetUIMark()
     -- Display item marker
-    return self.xml:InitStatic("porky_item_spot", self)
+    return self.xml:InitStatic("egi_item_spot", self)
   end
 
-  function ui_show_nearby_items:GetUIItemName()
+  function ui_enhanced_ground_items:GetUIItemName()
     -- Display item name
-    return self.xml:InitTextWnd("porky_item_name", self)
+    return self.xml:InitTextWnd("egi_item_name", self)
   end
 
-  function ui_show_nearby_items:ScreenPosValid(vec)
+  function ui_enhanced_ground_items:ScreenPosValid(vec)
     return (vec.x ~= -9999) and (vec.y ~= 0) and (vec.x <= 1024) and (vec.y <= 768)
   end
   
-  function ui_show_nearby_items:ApplyScreenRatio(ele)
+  function ui_enhanced_ground_items:ApplyScreenRatio(ele)
     if (ele) then
       ele:SetWndSize(vector2():set(ele:GetWidth() * (self.ratio or 1), ele:GetHeight()))
     end
@@ -357,20 +376,20 @@ class "ui_show_nearby_items" (CUIScriptWnd)
 
 function on_key_press(key)
   -- shift + f to toggle by default
-  if(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_ENABLED) then -- Check if addon is Enabled/Disabled in MCM
-    if(key == show_nearby_items_mcm.SHOW_NEARBY_ITEMS_KEY) then  -- Using MCM Check for Single Tap or Double Tap
+  if(enhanced_ground_items_mcm.EGI_ENABLED) then -- Check if addon is Enabled/Disabled in MCM
+    if(key == enhanced_ground_items_mcm.EGI_KEY) then  -- Using MCM Check for Single Tap or Double Tap
 
       -- No MCM case
-      if(not show_nearby_items_mcm.MCM_KEYBINDS) then 
+      if(not enhanced_ground_items_mcm.MCM_KEYBINDS) then 
         toggle_show_items()
         return
       end
       -- MCM Simple Press
-      if (show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODE == 0) and ui_mcm.get_mod_key(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODIFIER) then
+      if (enhanced_ground_items_mcm.EGI_MODE == 0) and ui_mcm.get_mod_key(enhanced_ground_items_mcm.EGI_MODIFIER) then
         ui_mcm.simple_press("porky_show_nearby_items", key, toggle_show_items())
       end
       -- MCM Double Tap
-      if (show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODE == 1) and ui_mcm.get_mod_key(show_nearby_items_mcm.SHOW_NEARBY_ITEMS_MODIFIER) and ui_mcm.double_tap("porky_show_nearby_items", key) then
+      if (enhanced_ground_items_mcm.EGI_MODE == 1) and ui_mcm.get_mod_key(enhanced_ground_items_mcm.EGI_MODIFIER) and ui_mcm.double_tap("porky_show_nearby_items", key) then
         toggle_show_items()
         return
       end
@@ -403,5 +422,5 @@ function on_game_start()
 	RegisterScriptCallback("actor_on_first_update",actor_on_first_update)
   RegisterScriptCallback("on_key_press", on_key_press)
 
-  log("[ITsPorkys - Show Nearby Items] - Addon enabled...")
+  log("[EGI - Enhanced Ground Items] - Addon enabled...")
 end

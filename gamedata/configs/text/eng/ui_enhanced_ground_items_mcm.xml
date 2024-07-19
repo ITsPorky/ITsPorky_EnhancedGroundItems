@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<string_table>
+	<string id="ui_mcm_menu_porky_enhanced_ground_items">
+		<text>EGI - Enhanced Ground Items</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsTitle">
+		<text>EGI - Enhanced Ground Items</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsEnabled">
+		<text>Enable EGI - Enhanced Ground Items</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsEnabled_desc">
+		<text>Enables the "Enhanced Ground Items" feature, which allows the player to toggle on/off ground items UI windows.</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsMarkersEnabled">
+		<text>Enable Item Name Markers</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsMarkersEnabled_desc">
+		<text>Enables the item name to be shown when in range of the item on the ground.</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsWindowsEnabled">
+		<text>Enable Item UI Window</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsWindowsEnabled_desc">
+		<text>Enables the item UI Window to be shown when in range and player looks at the item on the ground.</text>
+	</string>
+    <string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsDetectionDistance">
+        <text>Detection Distance for Enhanced Ground Items</text>
+    </string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsKey">
+		<text>Keybind for EGI - Enhanced Ground Items</text>
+	</string>
+	<string id="ui_mcm_porky_enhanced_ground_items_enhancedGroundItemsKey_desc">
+		<text>Enter the keybind you would like to use for toggling Enhanced Ground Items.</text>
+	</string>
+</string_table>
