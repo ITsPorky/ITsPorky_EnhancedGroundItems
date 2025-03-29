@@ -1,7 +1,7 @@
 --
--- ITsPorkys - Enhanced Ground Items (EGI) v1.0
--- Last modified: 18.07.2024 (dd.mm.yyyy)
--- https://github.com/ITsPorky/ITsPorkys_ShowNearbyItems-v0.1
+-- ITsPorkys - Enhanced Ground Items (EGI) v1.0.0
+-- Last modified: 29.03.2025 (dd.mm.yyyy)
+-- https://github.com/ITsPorky/ITsPorky_EnhancedGroundItems
 --
 
 -------------------------------------------------------------------------------------------------------
@@ -67,9 +67,17 @@ function in_npc_inv(npc, obj)
 	return _parent and (_parent:id() == npc:id())
 end
 
+function vector_distance(pos1, pos2)
+  local dx = pos1.x - pos2.x
+  local dy = pos1.y - pos2.y
+  local dz = pos1.z - pos2.z
+  return math.sqrt(dx * dx + dy * dy + dz * dz)
+end
+
 -- Class Start
 class "ui_enhanced_ground_items" (CUIScriptWnd) 
 
+  -- Stores list of items to show with this feature (probably missed some)
   local item_classes = {
     -- Objects
     [clsid.artefact] = true,
@@ -176,6 +184,7 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
     self.xml = CScriptXmlInit()
     self.xml:ParseFile("ui_enhanced_ground_items.xml")
     self.ratio = (1024/768)/(device().width/device().height)
+
     -- Tables for storing marker/UI data
     self.item_table = {}
     self.marker_table = {}
@@ -185,136 +194,163 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
   end
 
   function ui_enhanced_ground_items:__finalize()
+    self:RemoveUIAndCleanUp()
+  end
+
+  function ui_enhanced_ground_items:RemoveUIAndCleanUp()
+    -- Hide all UI elements (in case they were previously visible)
     for id,_ in pairs(self.ui_table) do
-      self.ui_table[id]:Show(false)
-      self.ui_table[id] = nil
+      self.ui_table[id]:Show(false) -- Hide all ui windows
     end
+    self.ui_table = {} -- Clean up by clearing table
+
     for id,_ in pairs(self.marker_table) do
-      self.marker_table[id]:Show(false)
-      self.marker_table[id] = nil
+      self.marker_table[id]:Show(false) -- Hide all ui markers
     end
+    self.marker_table = {} -- Clean up by clearing table
+
+    self.item_table = {} -- Clean up by clearing table
   end
 
   function ui_enhanced_ground_items:Update()
     CUIScriptWnd.Update(self)
+
+    if not isToggled or not enhanced_ground_items_mcm.EGI_ENABLED then
+      self:RemoveUIAndCleanUp()
+      return
+    end
+
+    -- Proceed with the update only if both conditions are true
     self:UpdateObject()
     self:UpdateUI()
   end
 
   function ui_enhanced_ground_items:UpdateObject()
-    if(self.update_timer > time_global()) then
-      -- Not ready for update yet, continue
-      return
-    end
-
-    -- Get time for next update
+    -- Only update on time delay
+    if self.update_timer > time_global() then return end
     self.update_timer = time_global() + self.update_delay
 
-    -- Do block to contain scoping of self.show_item
-    do
-      self.show_item = enhanced_ground_items_mcm.EGI_ENABLED and main_hud_shown() or false
-    end
+    -- Check if mod is enabled
+    self.show_item = enhanced_ground_items_mcm.EGI_ENABLED and main_hud_shown() or false
+    if not self.show_item then return end
 
-    -- Actor position
     local pos = db.actor:position()
 
-    -- Remove invalid objects
-    for id,_ in pairs(self.item_table) do
-      local obj = object_by_id(id)
-      if not (self:ValidateItem(obj, pos)) then
-        self.item_table[id] = nil
-      end
+    -- Optimize: Store items to remove to avoid modifying table during iteration
+    local to_remove = {}
+
+    -- Check each item in the table
+    for id, _ in pairs(self.item_table) do
+        local obj = object_by_id(id)
+        if not self:ValidateItem(obj, pos) then
+            table.insert(to_remove, id)
+        end
     end
 
-    -- Loop through in game objects
+    -- Remove invalid items after iteration to avoid modifying the table during iteration
+    for _, id in ipairs(to_remove) do
+        self.item_table[id] = nil
+    end
+
+    -- Process new objects more efficiently (only if not already in the table)
     for obj in game_objects_iter() do
-      if(self:ValidateItem(obj, pos)) then
-        if(self.item_table[obj:id()] == nil) then
-          self.item_table[obj:id()] = true
+        local obj_id = obj:id()
+        if not self.item_table[obj_id] and self:ValidateItem(obj, pos) then
+            self.item_table[obj_id] = true
         end
-      end  
     end
   end
 
   function ui_enhanced_ground_items:UpdateUI()
-    for id,_ in pairs(self.item_table) do
-      local obj = object_by_id(id)
+    
+    -- Ensure actor position is valid before proceeding
+    local actor_pos = db.actor:position()
+    if not actor_pos then return end
 
-      -- Check UI Windows are enabled
-      if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
-        -- Create UI windows if it doesn't exist
-        if (self.ui_table[id] == nil) then
+    -- Check each item in the table for updates
+    for id, _ in pairs(self.item_table) do
+      local obj = object_by_id(id)
+      if not obj then goto continue end
+
+      local obj_id = obj:id()
+      local obj_pos = obj:position()
+      if not obj_pos then goto continue end
+
+      -- UI Window Handling (Only Show if Player is Looking at the Item)
+      if enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED then
+        if not self.ui_table[obj_id] then
           local item_info = ui_enhanced_ground_items_info.UIItemInfo(self)
           item_info:Update(obj, obj:section())
           self:ApplyScreenRatio(item_info.dialog)
-          self.ui_table[id] = item_info.dialog
-          self.ui_table[id]:Show(false)
+          self.ui_table[obj_id] = item_info.dialog
         end
-      end
 
-      -- Check Markers are enabled
-      if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
-        -- Create Marker UI if it doesn't exist
-        if (self.marker_table[id] == nil) then
-          self.marker_table[id] = self:GetUIItemName()
-          local name = obj and ui_item.get_obj_name(obj)
-          self.marker_table[id]:SetText(name)
-          self:ApplyScreenRatio(self.marker_table[id])
-          self.marker_table[id]:Show(false)
-        end
-      end
-    end
+        -- Check if the player is looking at the item (within distance)
+        local targetObject = level.get_target_obj() or nil
+        local looking_at_item = targetObject ~= nil and obj_id == targetObject:id() and 
+                                targetObject:position():distance_to_sqr(actor_pos) < math.pow(2, 2)
 
-    for id,_ in pairs(self.marker_table) do
-      -- Update markers.
-      if (self.item_table[id]) then
-        local obj = object_by_id(id)
+        -- Show UI window if looking at item
+        self.ui_table[obj_id]:Show(looking_at_item)
 
-        -- Check UI Windows are enabled
-        if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
-          -- UI position
-          local ui_vec = vector(20, 20)
-          --Object in players view (at crosshair / center screen)
-          local targetObject = level.get_target_obj() or nil
-          -- Check if screen position is valid
-          if (targetObject ~= nil and id == targetObject:id() and targetObject:position():distance_to_sqr(db.actor:position()) < math.pow(5,2)) then
-            -- Update UI Markers
-            self.ui_table[id]:SetWndPos(ui_vec)
-            self.ui_table[id]:Show(true)
-          else
-            self.ui_table[id]:Show(false)
+        -- Update UI Window Position based on world position
+        if looking_at_item then
+          local ui_pos = vector(20, 20) 
+
+          -- Ensure ui_pos is valid
+          if ui_pos and self:ScreenPosValid(ui_pos) then
+            self.ui_table[obj_id]:SetWndPos(ui_pos)
           end
         end
-
-        -- Check Markers are enabled
-        if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
-          -- Marker position
-          local marker_pos = obj and vector():set(obj:position()):add(vector():set(0,0,0))
-          local marker_vec = marker_pos and game.world2ui(marker_pos, false, false)
-          -- Check if screen position is valid
-          if (self:ScreenPosValid(marker_vec)) then
-            -- Update UI Markers
-            self.marker_table[id]:SetWndPos(marker_vec)
-            self.marker_table[id]:Show(true)
-          else
-            self.marker_table[id]:Show(false)
+      else -- Else remove all UI windows
+        if self.ui_table ~= {} then
+          for id,_ in pairs(self.ui_table) do
+            self.ui_table[id]:Show(false) -- Hide all UI windows
           end
+          self.ui_table = {} -- Clean up by clearing table
         end
-      else
-        -- Check UI Windows are enabled
-        if(enhanced_ground_items_mcm.EGI_WINDOWS_ENABLED) then
-          self.ui_table[id]:Show(false)
-        end
-
-        -- Check Markers are enabled
-        if(enhanced_ground_items_mcm.EGI_MARKERS_ENABLED) then
-          self.marker_table[id]:Show(false)
-        end
-
-        -- Remove markers and windows
-        self.ui_table[id] = nil
-        self.marker_table[id] = nil
       end
+
+      -- Marker Handling (Only Show if Within Detection Distance)
+      if enhanced_ground_items_mcm.EGI_MARKERS_ENABLED then
+        -- Create marker if not already created
+        if not self.marker_table[obj_id] then
+            self.marker_table[obj_id] = self:GetUIItemName()
+            self.marker_table[obj_id]:SetText(ui_item.get_obj_name(obj))
+            self:ApplyScreenRatio(self.marker_table[obj_id])
+        end
+
+        -- Get the screen position for the marker
+        local marker_pos = obj_pos and game.world2ui(obj_pos, false, false)
+
+        -- Ensure marker position is valid and check if within detection distance
+        if marker_pos and self:ScreenPosValid(marker_pos) then
+            local distance = vector_distance(actor_pos, obj_pos)
+
+            if distance then
+                local visible = distance <= enhanced_ground_items_mcm.EGI_DETECTION_DISTANCE
+                if visible then
+                    self.marker_table[obj_id]:SetWndPos(marker_pos) -- Set position and show the marker if it's valid
+                    self.marker_table[obj_id]:Show(true)
+                else
+                    self.marker_table[obj_id]:Show(false) -- Hide marker if out of detection range
+                end
+            else
+                self.marker_table[obj_id]:Show(false) -- Hide marker if no valid distance calculation
+            end
+        else
+            self.marker_table[obj_id]:Show(false) -- Hide marker if out of screen bounds
+        end
+      else -- Else remove all UI markers
+        if self.marker_table ~= {} then
+          for id,_ in pairs(self.marker_table) do
+            self.marker_table[id]:Show(false) -- Hide all UI markers
+          end
+          self.marker_table = {} -- Clean up by clearing table
+        end
+      end
+
+      ::continue::
     end
   end
 
@@ -338,7 +374,7 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
   end 
 
   function ui_enhanced_ground_items:IsItem(obj)
-    -- Removes items in hands and npc hands from being displayed
+    -- Removes items in hands and npc hands from being displayed wiht markers
     local se = alife_object(obj:id())
     if (se and (se.parent_id ~= 65535)) then
       return false
@@ -368,6 +404,7 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
       ele:SetWndSize(vector2():set(ele:GetWidth() * (self.ratio or 1), ele:GetHeight()))
     end
   end
+
 -- Class end
 
 -------------------------------------------------------------------------------------------------------
