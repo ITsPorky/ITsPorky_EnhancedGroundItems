@@ -66,13 +66,13 @@ The MCM Tab for this addon is "EGI - Enhanced Ground Items"
 ### Features
 
 Ground Item Information Windows - Information windows show when the player looks at a ground item in range. They are't perfect but it will do for now.
-![Item information UI Window](/images/stalker-UI-Info-Window.gif)
+![Item information UI Window](/images/EGI-ui-windows.gif)
 
 Ground Item Markers - These markers mark items on the ground that can be picked up.
-![Item Markers](/images/stalker-markers.gif)
+![Item Markers](/images/EGI-markers.gif)
 
-Markers will also dissapear after the item has been picked up.
-![Item Markers Removal](/images/stalker-pickup.gif)
+Markers can be toggled on and off at anytime using a keybind you set.
+![Item Markers Removal](/images/EGI-toggle.gif)
 
 ## Authors Note: Hope you find this addon useful!
 

@@ -249,8 +249,12 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
 
     -- Remove invalid items after iteration to avoid modifying the table during iteration
     for _, id in ipairs(to_remove) do
-        self.item_table[id] = nil
-    end
+      self.item_table[id] = nil
+      if self.marker_table[id] then
+          self.marker_table[id]:Show(false)
+          self.marker_table[id] = nil
+      end
+  end
 
     -- Process new objects more efficiently (only if not already in the table)
     for obj in game_objects_iter() do
@@ -334,12 +338,16 @@ class "ui_enhanced_ground_items" (CUIScriptWnd)
                     self.marker_table[obj_id]:Show(true)
                 else
                     self.marker_table[obj_id]:Show(false) -- Hide marker if out of detection range
+                    self.marker_table[obj_id] = nil -- Remove from table when out of range
                 end
             else
+              if self.marker_table[obj_id] then
                 self.marker_table[obj_id]:Show(false) -- Hide marker if no valid distance calculation
+                self.marker_table[obj_id] = nil -- Remove marker when invalid
+              end
             end
         else
-            self.marker_table[obj_id]:Show(false) -- Hide marker if out of screen bounds
+            self.marker_table[obj_id]:Show(false) -- Hide marker if out of screen boundss
         end
       else -- Else remove all UI markers
         if self.marker_table ~= {} then
